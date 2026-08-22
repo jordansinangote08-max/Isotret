@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#315f63" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Dose Tracker" />
+  <meta name="description" content="A simple daily dose tracker with treatment progress, history, local backup, and optional cloud sync." />
+  <title>Daily Dose Tracker</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to content</a>
+
+  <div class="shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand-block">
+        <div class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.4 5.2a4.1 4.1 0 0 1 5.8 0l4.6 4.6a4.1 4.1 0 0 1 0 5.8l-3.2 3.2a4.1 4.1 0 0 1-5.8 0l-4.6-4.6a4.1 4.1 0 0 1 0-5.8z" />
+            <path d="m8.2 16 7.8-7.8" />
+          </svg>
+        </div>
+        <div>
+          <strong>Daily Dose</strong>
+          <span>Tracker</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item is-active" data-view-target="home" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-item" data-view-target="history" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+          <span>History</span>
+        </button>
+
+        <p class="nav-label">Manage</p>
+
+        <button class="nav-item" data-view-target="settings" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1L7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3h4a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10h.1v4H21a1.7 1.7 0 0 0-1.6 1z"/></svg>
+          <span>Settings</span>
+        </button>
+        <button class="nav-item" data-view-target="sync" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18a4.6 4.6 0 0 1-.8-9.1A6.5 6.5 0 0 1 18.6 8 4.3 4.3 0 0 1 18 16.5H9"/><path d="m12 13-3 3 3 3M9 16h7"/></svg>
+          <span>Backup &amp; Sync</span>
+        </button>
+        <button class="nav-item" id="exportNav" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 20h16"/></svg>
+          <span>Export Data</span>
+        </button>
+
+        <p class="nav-label">Account</p>
+
+        <button class="nav-item" data-view-target="preferences" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/><circle cx="8" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>
+          <span>Preferences</span>
+        </button>
+        <button class="nav-item" data-view-target="about" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+          <span>About</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="theme-switch" id="desktopThemeToggle" type="button" aria-label="Toggle dark mode">
+          <span class="theme-switch-icon" aria-hidden="true">☾</span>
+          <span>Dark mode</span>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </button>
+        <div class="sync-badge" id="sidebarSyncStatus">
+          <span class="sync-dot"></span>
+          <div><strong>Saved locally</strong><span>Ready</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div class="mobile-brand">
+          <div class="brand-logo small" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 5.2a4.1 4.1 0 0 1 5.8 0l4.6 4.6a4.1 4.1 0 0 1 0 5.8l-3.2 3.2a4.1 4.1 0 0 1-5.8 0l-4.6-4.6a4.1 4.1 0 0 1 0-5.8z"/><path d="m8.2 16 7.8-7.8"/></svg>
+          </div>
+          <strong>Daily Dose Tracker</strong>
+        </div>
+
+        <div class="desktop-heading">
+          <h1 id="greetingTitle">Good morning!</h1>
+          <p>Stay consistent. Every dose counts.</p>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="icon-button" id="mobileThemeToggle" type="button" aria-label="Toggle dark mode">☾</button>
+          <button class="avatar-button" id="profileMenuButton" type="button" aria-haspopup="true" aria-expanded="false">U</button>
+          <button class="icon-button menu-only" id="mobileMenuButton" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+        </div>
+      </header>
+
+      <div class="mobile-menu" id="mobileMenu" hidden>
+        <button type="button" data-view-target="settings">Settings</button>
+        <button type="button" data-view-target="sync">Backup &amp; Sync</button>
+        <button type="button" id="mobileExport">Export Data</button>
+        <button type="button" data-view-target="preferences">Preferences</button>
+        <button type="button" data-view-target="about">About</button>
+      </div>
+
+      <main id="mainContent" class="content-area">
+        <section class="view is-active" data-view="home" aria-labelledby="homeTitle">
+          <h2 class="sr-only" id="homeTitle">Home</h2>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-left">
+              <article class="card today-card">
+                <div>
+                  <span class="eyebrow">Today</span>
+                  <div class="dose-big"><strong id="todayPlannedDose">30</strong><span>mg</span></div>
+                  <p class="muted">Planned daily dose</p>
+                  <button class="btn btn-primary btn-log" type="button" data-open-dose>＋&nbsp; Log today's dose</button>
+                  <p class="today-status" id="todayStatus">No dose recorded yet today.</p>
+                </div>
+                <div class="today-art" aria-hidden="true">
+                  <svg viewBox="0 0 220 180" fill="none">
+                    <path d="M32 114c-15-38 8-81 48-92 43-12 87 7 105 44 18 38 3 87-36 105-42 20-99 2-117-57z" fill="currentColor" opacity=".08"/>
+                    <rect x="58" y="56" width="88" height="76" rx="10" fill="currentColor" opacity=".12"/>
+                    <path d="M75 52v-14M96 52v-14M117 52v-14M138 52v-14" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity=".45"/>
+                    <path d="M72 79l7 7 13-15M102 79l7 7 13-15M72 108l7 7 13-15M102 108l7 7 13-15" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+                    <rect x="142" y="90" width="36" height="54" rx="8" fill="currentColor" opacity=".72"/>
+                    <rect x="148" y="78" width="24" height="16" rx="4" fill="currentColor" opacity=".55"/>
+                    <path d="M151 115h18" stroke="var(--color-surface)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M182 135c6-5 16-3 20 3s2 15-4 19c-6 5-16 3-20-3-4-7-2-15 4-19z" fill="var(--color-surface)" stroke="currentColor" opacity=".9"/>
+                  </svg>
+                </div>
+              </article>
+
+              <article class="card treatment-card compact-clickable" data-view-target="settings" tabindex="0" role="button" aria-label="Open treatment settings">
+                <div class="card-title-row">
+                  <span class="eyebrow">Treatment target</span>
+                  <span class="chevron">›</span>
+                </div>
+                <div class="treatment-metrics">
+                  <div><span class="metric-icon">◉</span><strong id="targetWeightHome">75 kg</strong><small>Weight</small></div>
+                  <div><span class="metric-icon">▣</span><strong id="targetDoseHome">30 mg/day</strong><small>Daily dose</small></div>
+                  <div><span class="metric-icon">◎</span><strong id="targetLevelHome">135 mg/kg</strong><small>Target cumulative</small></div>
+                </div>
+                <p class="muted small-text" id="startDateHome">Treatment start date not set.</p>
+              </article>
+            </div>
+
+            <article class="card progress-card">
+              <div class="card-title-row">
+                <span class="eyebrow">Treatment progress</span>
+                <span class="info-dot" title="Progress is based on all recorded doses and your target cumulative dose.">i</span>
+              </div>
+
+              <div class="progress-top">
+                <div>
+                  <p class="muted">Total taken</p>
+                  <div class="progress-total" id="homeTotalTaken">0 mg</div>
+                  <p class="progress-sub" id="homeMgKg">0.00 mg/kg</p>
+                </div>
+                <div class="ring" id="progressRing" style="--progress:0">
+                  <div><strong id="ringPercent">0%</strong><span>of goal</span></div>
+                </div>
+              </div>
+
+              <div class="progress-line" aria-hidden="true"><span id="progressLineFill"></span></div>
+
+              <div class="progress-mini-grid">
+                <div><strong id="remainingHome">0 mg</strong><span>Remaining</span></div>
+                <div><strong id="daysLeftHome">—</strong><span>Est. left</span></div>
+              </div>
+
+              <button class="text-row-button" type="button" data-view-target="settings">View full progress <span>›</span></button>
+            </article>
+          </div>
+
+          <div class="lower-grid">
+            <article class="card recent-history-card">
+              <div class="card-title-row">
+                <span class="eyebrow">Recent history</span>
+                <button class="btn btn-ghost btn-small" type="button" data-view-target="history">View full history</button>
+              </div>
+
+              <div class="mini-history-layout">
+                <div class="mini-calendar-wrap">
+                  <div class="mini-calendar-head">
+                    <button class="calendar-arrow" id="miniPrevMonth" type="button" aria-label="Previous month">‹</button>
+                    <strong id="miniMonthLabel">Month</strong>
+                    <button class="calendar-arrow" id="miniNextMonth" type="button" aria-label="Next month">›</button>
+                  </div>
+                  <div class="mini-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                  <div class="mini-calendar" id="miniCalendar"></div>
+                </div>
+
+                <div class="recent-side">
+                  <div>
+                    <strong id="recentSelectedDate">Select a date</strong>
+                    <div class="record-status" id="recentSelectedStatus">Tap a day to see its record.</div>
+                  </div>
+                  <div class="month-summary-grid">
+                    <div><strong id="summaryTaken">0</strong><span>Taken</span></div>
+                    <div><strong id="summaryTotal">0 mg</strong><span>Total</span></div>
+                    <div><strong id="summaryConsistency">—</strong><span>Consistency</span></div>
+                  </div>
+                  <button class="btn btn-secondary full-width" type="button" data-view-target="history">Open full history</button>
+                </div>
+              </div>
+            </article>
+
+            <div class="right-stack">
+              <article class="card quick-card">
+                <span class="eyebrow">Quick actions</span>
+                <button class="quick-row" id="editLastEntry" type="button"><span>✎</span><div><strong>Edit last entry</strong><small id="lastEntryCaption">No entry yet</small></div><b>›</b></button>
+                <button class="quick-row" type="button" data-open-dose><span>＋</span><div><strong>Add dose</strong><small>Record today's dose</small></div><b>›</b></button>
+                <button class="quick-row" type="button" data-view-target="history"><span>▤</span><div><strong>View all records</strong><small>Open full history</small></div><b>›</b></button>
+              </article>
+
+              <article class="card help-card">
+                <span class="eyebrow">Need help?</span>
+                <button class="quick-row" type="button" data-view-target="about"><span>?</span><div><strong>View guide</strong><small>How to use the tracker</small></div><b>›</b></button>
+                <button class="quick-row" type="button" data-view-target="about"><span>?</span><div><strong>FAQs</strong><small>Common questions answered</small></div><b>›</b></button>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view="history" aria-labelledby="historyTitle">
+          <div class="page-heading">
+            <div><span class="eyebrow">History</span><h2 id="historyTitle">Dose history</h2><p>Review, correct, and manage your saved doses.</p></div>
+            <button class="btn btn-danger-ghost" id="clearHistory" type="button">Clear history</button>
+          </div>
+
+          <article class="card history-main-card">
+            <div class="history-toolbar">
+              <button class="calendar-arrow large" id="historyPrevMonth" type="button" aria-label="Previous month">‹</button>
+              <strong id="historyMonthLabel">Month</strong>
+              <button class="calendar-arrow large" id="historyNextMonth" type="button" aria-label="Next month">›</button>
+            </div>
+            <div class="history-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+            <div class="history-calendar" id="historyCalendar"></div>
+          </article>
+
+          <div class="history-lower-grid">
+            <article class="card selected-day-card">
+              <span class="eyebrow">Selected day</span>
+              <h3 id="historySelectedDate">Select a date</h3>
+              <p id="historySelectedStatus" class="muted">Tap a day in the calendar.</p>
+              <div id="historySelectedActions" class="selected-actions"></div>
+            </article>
+
+            <article class="card">
+              <span class="eyebrow">This month</span>
+              <div class="month-summary-grid large-summary">
+                <div><strong id="historySummaryTaken">0</strong><span>Doses taken</span></div>
+                <div><strong id="historySummaryTotal">0 mg</strong><span>Total taken</span></div>
+                <div><strong id="historySummaryConsistency">—</strong><span>Consistency</span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-view="settings" aria-labelledby="settingsTitle">
+          <div class="page-heading"><div><span class="eyebrow">Settings</span><h2 id="settingsTitle">Treatment settings</h2><p>Update the values used to calculate your progress.</p></div></div>
+          <article class="card settings-card">
+            <form id="settingsForm" class="settings-form">
+              <label class="field"><span>Weight</span><div class="input-shell"><input id="weightKg" type="number" min="1" step="0.1" inputmode="decimal" required><span>kg</span></div></label>
+              <label class="field"><span>Planned daily dose</span><div class="input-shell"><input id="plannedDose" type="number" min="1" step="1" inputmode="decimal" required><span>mg/day</span></div></label>
+              <label class="field"><span>Treatment start date</span><input id="treatmentStartDate" type="date"></label>
+              <fieldset class="field choice-field"><legend>Target cumulative dose</legend><div class="choice-grid"><label><input type="radio" name="targetLevel" value="120"><span><strong>120</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="135"><span><strong>135</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="150"><span><strong>150</strong><small>mg/kg</small></span></label></div></fieldset>
+              <button class="btn btn-primary" type="submit">Save settings</button>
+              <p class="form-status" id="settingsStatus" aria-live="polite"></p>
+            </form>
+          </article>
+        </section>
+
+        <section class="view" data-view="sync" aria-labelledby="syncTitle">
+          <div class="page-heading"><div><span class="eyebrow">Backup &amp; Sync</span><h2 id="syncTitle">Cloud backup</h2><p>Your data is always stored locally first. JSONBin sync is optional.</p></div></div>
+          <div class="two-card-grid">
+            <article class="card settings-card">
+              <div class="settings-form">
+                <label class="field"><span>JSONBin API key</span><input id="jsonbinKey" type="password" autocomplete="off" spellcheck="false" placeholder="X-Master-Key"></label>
+                <label class="field"><span>Bin ID</span><input id="jsonbinBinId" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="24-character Bin ID"></label>
+                <div class="button-row"><button class="btn btn-primary" id="connectCloud" type="button">Connect &amp; load</button><button class="btn btn-secondary" id="syncCloudNow" type="button">Sync now</button></div>
+                <p class="form-status" id="cloudStatus" aria-live="polite">Not connected.</p>
+              </div>
+            </article>
+            <article class="card sync-info-card">
+              <span class="eyebrow">How it works</span>
+              <h3>Local-first storage</h3>
+              <p>Your tracker works even without cloud sync. Every change is saved to this browser first.</p>
+              <ul><li>Use the same API key and Bin ID on another device.</li><li>If cloud sync fails, your local copy stays intact.</li><li>Use Export Data for an extra offline backup.</li></ul>
+              <a class="btn btn-secondary inline-btn" href="https://jsonbin.io" target="_blank" rel="noopener noreferrer">Open JSONBin</a>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-view="preferences" aria-labelledby="preferencesTitle">
+          <div class="page-heading"><div><span class="eyebrow">Preferences</span><h2 id="preferencesTitle">Appearance</h2><p>Choose how the tracker looks on this device.</p></div></div>
+          <article class="card settings-card">
+            <div class="preference-row"><div><strong>Dark mode</strong><p class="muted">Switch between light and dark appearance.</p></div><button class="switch-button" id="preferenceThemeToggle" type="button" aria-pressed="false"><span></span></button></div>
+          </article>
+        </section>
+
+        <section class="view" data-view="about" aria-labelledby="aboutTitle">
+          <div class="page-heading"><div><span class="eyebrow">About</span><h2 id="aboutTitle">Daily Dose Tracker</h2><p>A personal tracking tool for recording daily doses and viewing cumulative progress.</p></div></div>
+          <div class="two-card-grid">
+            <article class="card prose-card"><h3>How to use it</h3><ol><li>Open Settings and enter your weight, planned daily dose, target cumulative dose, and optional start date.</li><li>Use <strong>Log today's dose</strong> or the floating + button to save a dose.</li><li>Open History to review, edit, or remove saved entries.</li><li>Optionally connect JSONBin for cloud backup across devices.</li></ol></article>
+            <article class="card prose-card"><h3>Important</h3><p>This tracker performs arithmetic based on the values you enter. It does not determine what dose or cumulative target is appropriate for you. Follow the treatment plan given by your qualified healthcare professional.</p></article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <button class="fab" id="fabLogDose" type="button" aria-label="Log a dose" data-open-dose>＋</button>
+
+  <nav class="bottom-nav" aria-label="Mobile primary navigation">
+    <button class="bottom-nav-item is-active" data-view-target="home" type="button"><span>⌂</span><small>Home</small></button>
+    <button class="bottom-add" type="button" aria-label="Log a dose" data-open-dose>＋</button>
+    <button class="bottom-nav-item" data-view-target="history" type="button"><span>▣</span><small>History</small></button>
+  </nav>
+
+  <div class="modal" id="doseModal" hidden>
+    <div class="modal-backdrop" data-close-dose></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="doseModalTitle">
+      <div class="modal-header"><div><span class="eyebrow">Dose entry</span><h2 id="doseModalTitle">Log a dose</h2></div><button class="icon-button" type="button" data-close-dose aria-label="Close">×</button></div>
+      <form id="doseForm" class="settings-form">
+        <label class="field"><span>Date</span><input id="doseDate" type="date" required></label>
+        <label class="field"><span>Dose taken</span><div class="input-shell"><input id="doseMg" type="number" min="0" step="1" inputmode="decimal" required><span>mg</span></div></label>
+        <div class="button-row"><button class="btn btn-primary" id="doseSubmit" type="submit">Add entry</button><button class="btn btn-secondary" id="doseCancel" type="button" data-close-dose>Cancel</button></div>
+        <button class="btn btn-danger-ghost" id="deleteDose" type="button" hidden>Delete this entry</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
