@@ -30,6 +30,8 @@ let selectedDate = todayPH();
 let miniCursor = monthStartFromKey(todayPH());
 let historyCursor = monthStartFromKey(todayPH());
 let toastTimer = null;
+let modalReturnFocus = null;
+let cloudRequestInFlight = false;
 
 const $ = id => document.getElementById(id);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -40,6 +42,7 @@ const els = {
   openDoseButtons: $$("[data-open-dose]"),
   closeDoseButtons: $$("[data-close-dose]"),
   desktopThemeToggle: $("desktopThemeToggle"),
+  desktopThemeLabel: $("desktopThemeLabel"),
   mobileThemeToggle: $("mobileThemeToggle"),
   preferenceThemeToggle: $("preferenceThemeToggle"),
   mobileMenuButton: $("mobileMenuButton"),
@@ -63,8 +66,6 @@ const els = {
   progressLineFill: $("progressLineFill"),
   remainingHome: $("remainingHome"),
   daysLeftHome: $("daysLeftHome"),
-  editLastEntry: $("editLastEntry"),
-  lastEntryCaption: $("lastEntryCaption"),
 
   miniPrevMonth: $("miniPrevMonth"),
   miniNextMonth: $("miniNextMonth"),
@@ -106,8 +107,40 @@ const els = {
   doseDate: $("doseDate"),
   doseMg: $("doseMg"),
   doseSubmit: $("doseSubmit"),
-  deleteDose: $("deleteDose")
+  deleteDose: $("deleteDose"),
+  doseFormError: $("doseFormError")
 };
+
+function validDateKey(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+  const date = dateFromKey(value);
+  return !Number.isNaN(date.getTime()) && localDateKey(date) === value;
+}
+
+function normalizeEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.flatMap((entry, index) => {
+    if (!entry || typeof entry !== "object" || !validDateKey(entry.date)) return [];
+    const mg = Number(entry.mg);
+    if (!Number.isFinite(mg) || mg < 0 || mg > 10000) return [];
+    const id = String(entry.id || `recovered-${entry.date}-${index}`);
+    return [{ id, date: entry.date, mg }];
+  });
+}
+
+function normalizeSettings(settings) {
+  if (!settings || typeof settings !== "object") return { ...state.settings };
+  const weight = Number(settings.weight);
+  const plannedDose = Number(settings.plannedDose);
+  const targetLevel = Number(settings.targetLevel);
+  const startDate = settings.historyStartDate && validDateKey(settings.historyStartDate) ? settings.historyStartDate : "";
+  return {
+    weight: Number.isFinite(weight) && weight > 0 && weight <= 1000 ? weight : state.settings.weight,
+    plannedDose: Number.isFinite(plannedDose) && plannedDose > 0 && plannedDose <= 10000 ? plannedDose : state.settings.plannedDose,
+    targetLevel: [120, 135, 150].includes(targetLevel) ? targetLevel : state.settings.targetLevel,
+    historyStartDate: startDate
+  };
+}
 
 function formatNumber(value, digits = 0) {
   return new Intl.NumberFormat(undefined, {
@@ -165,15 +198,14 @@ function totalForDate(key) {
   return entriesForDate(key).reduce((sum, entry) => sum + Number(entry.mg || 0), 0);
 }
 
-function lastEntry() {
-  return [...state.entries].sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date);
-    return String(b.id).localeCompare(String(a.id));
-  })[0] || null;
-}
-
 function saveLocal() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (error) {
+    if (els.toast) showToast("Local save failed. Export a backup before closing this page.");
+    return false;
+  }
 }
 
 function loadLocal() {
@@ -182,12 +214,11 @@ function loadLocal() {
   if (!raw) return;
   try {
     const data = JSON.parse(raw);
-    if (Array.isArray(data.entries)) state.entries = data.entries;
-    if (data.settings) state.settings = { ...state.settings, ...data.settings };
-    if (data.theme) state.theme = data.theme;
+    state.entries = normalizeEntries(data.entries);
+    state.settings = normalizeSettings(data.settings);
+    if (data.theme === "light" || data.theme === "dark") state.theme = data.theme;
     saveLocal();
   } catch (error) {
-    console.warn("Could not load saved tracker data", error);
   }
 }
 
@@ -196,7 +227,6 @@ function loadCloudConfig() {
     const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
     if (raw) cloudConfig = { ...cloudConfig, ...JSON.parse(raw) };
   } catch (error) {
-    console.warn("Could not load cloud config", error);
   }
   els.jsonbinKey.value = cloudConfig.apiKey || "";
   els.jsonbinBinId.value = cloudConfig.binId || "";
@@ -207,15 +237,24 @@ function saveCloudConfig() {
   cloudConfig.binId = els.jsonbinBinId.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
   els.jsonbinKey.value = cloudConfig.apiKey;
   els.jsonbinBinId.value = cloudConfig.binId;
-  localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+  try {
+    localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cloudConfig));
+  } catch {
+    setCloudStatus("Cloud settings could not be saved on this device.", "error");
+  }
 }
 
 function applyTheme() {
   document.documentElement.setAttribute("data-theme", state.theme);
   const dark = state.theme === "dark";
   els.mobileThemeToggle.textContent = dark ? "☀" : "☾";
+  els.mobileThemeToggle.setAttribute("aria-pressed", String(dark));
+  els.mobileThemeToggle.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
+  els.preferenceThemeToggle.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
+  els.desktopThemeToggle.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
   els.preferenceThemeToggle.setAttribute("aria-pressed", String(dark));
   els.desktopThemeToggle.setAttribute("aria-pressed", String(dark));
+  if (els.desktopThemeLabel) els.desktopThemeLabel.textContent = dark ? "Light mode" : "Dark mode";
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#171b19" : "#315f63");
 }
 
@@ -239,12 +278,21 @@ function showToast(message) {
 }
 
 function showView(viewName) {
-  els.views.forEach(view => view.classList.toggle("is-active", view.dataset.view === viewName));
-  $$(".nav-item[data-view-target]").forEach(btn => btn.classList.toggle("is-active", btn.dataset.viewTarget === viewName));
-  $$(".bottom-nav-item").forEach(btn => btn.classList.toggle("is-active", btn.dataset.viewTarget === viewName));
+  els.views.forEach(view => {
+    const active = view.dataset.view === viewName;
+    view.classList.toggle("is-active", active);
+    view.toggleAttribute("aria-hidden", !active);
+  });
+  $$(".nav-item[data-view-target], .bottom-nav-item[data-view-target]").forEach(btn => {
+    const active = btn.dataset.viewTarget === viewName;
+    btn.classList.toggle("is-active", active);
+    if (active) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  });
   els.mobileMenu.hidden = true;
   els.mobileMenuButton.setAttribute("aria-expanded", "false");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   if (viewName === "history") renderHistory();
   if (viewName === "settings") syncSettingsForm();
   if (viewName === "sync") syncCloudForm();
@@ -267,13 +315,11 @@ function renderHome() {
   els.homeMgKg.textContent = `${formatNumber(stats.mgPerKg, 2)} mg/kg`;
   els.progressRing.style.setProperty("--progress", stats.progress.toFixed(2));
   els.ringPercent.textContent = `${formatNumber(stats.progress, 1)}%`;
+  els.progressRing.setAttribute("aria-valuenow", String(Math.round(stats.progress)));
   els.progressLineFill.style.width = `${stats.progress}%`;
   els.remainingHome.textContent = `${formatNumber(stats.remaining)} mg`;
   els.daysLeftHome.textContent = stats.remaining <= 0 ? "Complete" : stats.daysLeft ? `~${formatNumber(stats.daysLeft)} days` : "—";
 
-  const last = lastEntry();
-  els.lastEntryCaption.textContent = last ? `${formatDate(last.date, { month: "short" })} • ${formatNumber(last.mg)} mg` : "No entry yet";
-  els.editLastEntry.disabled = !last;
 
   renderMiniCalendar();
 }
@@ -457,29 +503,77 @@ function renderAll() {
   syncSettingsForm();
 }
 
+function modalFocusableElements() {
+  return $$("#doseModal button:not([disabled]):not([hidden]), #doseModal input:not([disabled]), #doseModal select:not([disabled]), #doseModal textarea:not([disabled]), #doseModal [tabindex]:not([tabindex=\"-1\"])")
+    .filter(element => !element.closest("[hidden]"));
+}
+
+function setBackgroundInert(inert) {
+  [document.querySelector(".shell"), $("fabLogDose"), document.querySelector(".bottom-nav")].forEach(element => {
+    if (element) element.inert = inert;
+  });
+}
+
 function openDoseModal(entry = null, requestedDate = null) {
   editingEntryId = entry?.id || null;
+  modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   els.doseModal.hidden = false;
+  setBackgroundInert(true);
   document.body.style.overflow = "hidden";
   els.doseModalTitle.textContent = entry ? "Edit dose" : "Log a dose";
   els.doseSubmit.textContent = entry ? "Save changes" : "Add entry";
   els.deleteDose.hidden = !entry;
   els.doseDate.value = entry?.date || requestedDate || todayPH();
   els.doseMg.value = entry?.mg ?? state.settings.plannedDose;
-  setTimeout(() => els.doseDate.focus(), 50);
+  els.doseFormError.textContent = "";
+  requestAnimationFrame(() => els.doseDate.focus());
 }
 
 function closeDoseModal() {
   editingEntryId = null;
   els.doseModal.hidden = true;
+  setBackgroundInert(false);
   document.body.style.overflow = "";
+  els.doseFormError.textContent = "";
+  const returnTarget = modalReturnFocus;
+  modalReturnFocus = null;
+  if (returnTarget?.isConnected) requestAnimationFrame(() => returnTarget.focus());
+}
+
+function trapDoseModalFocus(event) {
+  if (event.key !== "Tab" || els.doseModal.hidden) return;
+  const focusable = modalFocusableElements();
+  if (!focusable.length) {
+    event.preventDefault();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function upsertDose(event) {
   event.preventDefault();
   const date = els.doseDate.value;
   const mg = Number(els.doseMg.value);
-  if (!date || Number.isNaN(mg) || mg < 0) return;
+  els.doseFormError.textContent = "";
+
+  if (!date) {
+    els.doseFormError.textContent = "Choose a date for this dose.";
+    els.doseDate.focus();
+    return;
+  }
+  if (!Number.isFinite(mg) || mg < 0 || mg > 10000) {
+    els.doseFormError.textContent = "Enter a dose from 0 to 10,000 mg.";
+    els.doseMg.focus();
+    return;
+  }
 
   if (editingEntryId) {
     const entry = state.entries.find(item => item.id === editingEntryId);
@@ -512,8 +606,20 @@ function deleteEditingDose() {
 function saveSettings(event) {
   event.preventDefault();
   const target = document.querySelector('input[name="targetLevel"]:checked');
-  state.settings.weight = Number(els.weightKg.value) || 0;
-  state.settings.plannedDose = Number(els.plannedDose.value) || 0;
+  const weight = Number(els.weightKg.value);
+  const plannedDose = Number(els.plannedDose.value);
+  if (!Number.isFinite(weight) || weight <= 0 || weight > 1000) {
+    els.settingsStatus.textContent = "Enter a valid weight between 0 and 1,000 kg.";
+    els.weightKg.focus();
+    return;
+  }
+  if (!Number.isFinite(plannedDose) || plannedDose <= 0 || plannedDose > 10000) {
+    els.settingsStatus.textContent = "Enter a planned dose between 1 and 10,000 mg/day.";
+    els.plannedDose.focus();
+    return;
+  }
+  state.settings.weight = weight;
+  state.settings.plannedDose = plannedDose;
   state.settings.targetLevel = Number(target?.value) || 135;
   state.settings.historyStartDate = els.treatmentStartDate.value || "";
   saveLocal();
@@ -533,44 +639,81 @@ function setCloudStatus(message, type = "normal") {
   if (type === "error") { strong.textContent = "Saved locally"; sub.textContent = "Cloud unavailable"; }
 }
 
+function cloudErrorMessage(status, operation) {
+  if (status === 400) return `${operation} failed because the cloud request was invalid.`;
+  if (status === 401 || status === 403) return `${operation} failed. Check your JSONBin API key and permissions.`;
+  if (status === 404) return `${operation} failed. Check the Bin ID.`;
+  if (status === 429) return `${operation} is temporarily rate-limited. Try again shortly.`;
+  if (status >= 500) return `${operation} is temporarily unavailable. Your local data is safe.`;
+  return `${operation} failed. Your local data is safe.`;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function setCloudButtonsBusy(busy) {
+  [els.connectCloud, els.syncCloudNow].forEach(button => {
+    button.disabled = busy;
+    button.setAttribute("aria-busy", String(busy));
+  });
+}
+
 async function pullFromCloud() {
   saveCloudConfig();
   if (!navigator.onLine) { setCloudStatus("Offline. Using local data.", "error"); return false; }
   if (!cloudConfig.apiKey || !cloudConfig.binId) { setCloudStatus("Enter both API key and Bin ID.", "error"); return false; }
+  if (cloudRequestInFlight) return false;
+  cloudRequestInFlight = true;
+  setCloudButtonsBusy(true);
   setCloudStatus("Loading from cloud…");
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}/latest`, { headers: { "X-Master-Key": cloudConfig.apiKey } });
-    if (!response.ok) throw new Error(`Load failed (${response.status})`);
+    const response = await fetchWithTimeout(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}/latest`, { headers: { "X-Master-Key": cloudConfig.apiKey } });
+    if (!response.ok) throw new Error(cloudErrorMessage(response.status, "Cloud load"));
     const json = await response.json();
     const data = json.record;
-    if (Array.isArray(data.entries)) state.entries = data.entries;
-    if (data.settings) state.settings = { ...state.settings, ...data.settings };
-    if (data.theme) state.theme = data.theme;
+    if (!data || typeof data !== "object") throw new Error("Cloud data is not in a recognized tracker format.");
+    state.entries = normalizeEntries(data.entries);
+    state.settings = normalizeSettings(data.settings);
+    if (data.theme === "light" || data.theme === "dark") state.theme = data.theme;
     saveLocal();
     renderAll();
     setCloudStatus("Connected and loaded successfully.", "success");
     showToast("Cloud data loaded");
     return true;
   } catch (error) {
-    setCloudStatus(`Cloud load failed: ${error.message}`, "error");
+    const message = error.name === "AbortError" ? "Cloud load timed out. Your local data is safe." : error.message;
+    setCloudStatus(message, "error");
     return false;
+  } finally {
+    cloudRequestInFlight = false;
+    setCloudButtonsBusy(false);
   }
 }
 
 async function pushToCloud({ silent = false } = {}) {
   saveLocal();
   if (!navigator.onLine || !cloudConfig.apiKey) return false;
+  if (cloudRequestInFlight) return false;
+  cloudRequestInFlight = true;
+  setCloudButtonsBusy(true);
   try {
     const body = JSON.stringify({ entries: state.entries, settings: state.settings, theme: state.theme });
     let response;
     if (cloudConfig.binId) {
-      response = await fetch(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
+      response = await fetchWithTimeout(`https://api.jsonbin.io/v3/b/${cloudConfig.binId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-Master-Key": cloudConfig.apiKey },
         body
       });
     } else {
-      response = await fetch("https://api.jsonbin.io/v3/b", {
+      response = await fetchWithTimeout("https://api.jsonbin.io/v3/b", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Master-Key": cloudConfig.apiKey, "X-Bin-Private": "true" },
         body
@@ -582,14 +725,18 @@ async function pushToCloud({ silent = false } = {}) {
         syncCloudForm();
       }
     }
-    if (!response.ok) throw new Error(`Sync failed (${response.status})`);
+    if (!response.ok) throw new Error(cloudErrorMessage(response.status, "Cloud sync"));
     setCloudStatus("Synced successfully.", "success");
     if (!silent) showToast("Cloud sync complete");
     return true;
   } catch (error) {
-    setCloudStatus(`Cloud sync failed: ${error.message}`, "error");
+    const message = error.name === "AbortError" ? "Cloud sync timed out. Your local data is safe." : error.message;
+    setCloudStatus(message, "error");
     if (!silent) showToast("Cloud sync failed; local data is safe");
     return false;
+  } finally {
+    cloudRequestInFlight = false;
+    setCloudButtonsBusy(false);
   }
 }
 
@@ -632,12 +779,18 @@ function bindEvents() {
     }
   });
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && !els.doseModal.hidden) closeDoseModal();
+    if (!els.doseModal.hidden) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDoseModal();
+        return;
+      }
+      trapDoseModalFocus(event);
+    }
   });
 
   els.exportNav.addEventListener("click", exportData);
   els.mobileExport.addEventListener("click", exportData);
-  els.editLastEntry.addEventListener("click", () => { const entry = lastEntry(); if (entry) openDoseModal(entry); });
 
   els.miniPrevMonth.addEventListener("click", () => { miniCursor = new Date(miniCursor.getFullYear(), miniCursor.getMonth() - 1, 1); selectedDate = localDateKey(miniCursor); renderMiniCalendar(); });
   els.miniNextMonth.addEventListener("click", () => { miniCursor = new Date(miniCursor.getFullYear(), miniCursor.getMonth() + 1, 1); selectedDate = localDateKey(miniCursor); renderMiniCalendar(); });
@@ -672,8 +825,6 @@ function bindEvents() {
   els.jsonbinKey.addEventListener("input", () => { els.jsonbinKey.value = els.jsonbinKey.value.replace(/\s+/g, ""); });
   els.jsonbinBinId.addEventListener("input", () => { els.jsonbinBinId.value = els.jsonbinBinId.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24); });
 
-  document.querySelector(".treatment-card")?.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") showView("settings"); });
-
   window.addEventListener("online", () => { if (cloudConfig.apiKey && cloudConfig.binId) pushToCloud({ silent: true }); });
   window.addEventListener("offline", () => setCloudStatus("Offline. Changes remain saved locally.", "error"));
 }
@@ -683,10 +834,11 @@ function init() {
   loadCloudConfig();
   setGreeting();
   bindEvents();
+  showView("home");
   renderAll();
   if (navigator.onLine && cloudConfig.apiKey && cloudConfig.binId) pullFromCloud();
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.warn("Service worker registration failed", error)));
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
   }
 }
 
