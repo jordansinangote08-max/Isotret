@@ -377,6 +377,24 @@ function monthStats(cursor) {
   return { uniqueDates, total, consistency: eligibleDays ? Math.min((eligibleTaken / eligibleDays) * 100, 100) : null };
 }
 
+function overallStats() {
+  const uniqueDates = [...new Set(state.entries.map(entry => entry.date))];
+  const total = state.entries.reduce((sum, entry) => sum + Number(entry.mg || 0), 0);
+  const start = state.settings.historyStartDate;
+  let eligibleDays = 0;
+  let eligibleTaken = 0;
+  if (start) {
+    const today = todayPH();
+    if (start <= today) {
+      const a = dateFromKey(start);
+      const b = dateFromKey(today);
+      eligibleDays = Math.floor((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000) + 1;
+      eligibleTaken = uniqueDates.filter(key => key >= start && key <= today).length;
+    }
+  }
+  return { uniqueDates, total, consistency: eligibleDays ? Math.min((eligibleTaken / eligibleDays) * 100, 100) : null };
+}
+
 function calendarCells(cursor) {
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
@@ -475,7 +493,7 @@ function renderHistory() {
     else button.setAttribute("aria-label", formatDate(cell.key));
     els.historyCalendar.appendChild(button);
   }
-  const summary = monthStats(historyCursor);
+  const summary = overallStats();
   els.historySummaryTaken.textContent = formatNumber(summary.uniqueDates.length);
   els.historySummaryTotal.textContent = `${formatNumber(summary.total)} mg`;
   els.historySummaryConsistency.textContent = summary.consistency === null ? "—" : `${formatNumber(summary.consistency)}%`;
