@@ -1,6 +1,6 @@
 # 004 — Animate the progress ring's fill instead of snapping
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 75bfaf5
 - **Severity**: MEDIUM
 - **Category**: Missed opportunity / State indication

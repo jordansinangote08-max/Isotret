@@ -1,6 +1,6 @@
 # 005 — Add a busy spinner to the cloud sync buttons
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 75bfaf5
 - **Severity**: MEDIUM
 - **Category**: Missed opportunity / Feedback
@@ -84,6 +84,53 @@ This hides the button's own label text (`color: transparent`) while busy and cen
 - Do NOT modify `index.html` — no markup changes are needed; `::after` supplies the spinner.
 - Do NOT apply this spinner treatment to any other button or attribute — scope strictly to `[aria-busy="true"]`, which today is only ever set on `#connectCloud` and `#syncCloudNow`.
 - If `setCloudButtonsBusy` no longer sets `aria-busy` as a plain boolean-string attribute (e.g. it's been refactored to a data attribute or class) since commit `75bfaf5`, STOP and report instead of guessing the new selector.
+
+## Implementation note (found during execution, verified with Playwright)
+
+The Target as originally written had two bugs, caught by a functional check rather than static review:
+
+1. **Specificity**: `[aria-busy="true"] { color: transparent; }` has the same specificity as `.btn-primary { color: white; }`, and the latter is declared later in the file — so it silently won, leaving the label visible instead of hidden. Fixed by scoping to `.btn[aria-busy="true"]` (two selectors, beats one).
+2. **Contrast**: `border: 2px solid var(--surface);` renders a near-invisible spinner on `.btn-secondary` (`background: var(--surface-2)` — both tokens are close to the same near-white/near-black value depending on theme). Fixed by defaulting the spinner border to `var(--text)` (correct for `.btn-secondary`) and adding a `.btn-primary[aria-busy="true"]::after { border-color: white; border-right-color: transparent; }` override for the filled button.
+
+The actual shipped CSS (`styles.css`, immediately after `.btn:active`):
+
+```css
+.btn[aria-busy="true"] {
+  color: transparent;
+  position: relative;
+  pointer-events: none;
+}
+
+.btn[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--text);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 700ms linear infinite;
+}
+
+.btn-primary[aria-busy="true"]::after {
+  border-color: white;
+  border-right-color: transparent;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn[aria-busy="true"]::after {
+    animation-duration: 1400ms !important;
+  }
+}
+```
+
+Verified with Playwright: `getComputedStyle(button).color` is `rgba(0,0,0,0)` and the `::after` border resolves to white (on `#connectCloud`) / the dark text color (on `#syncCloudNow`) while `aria-busy="true"`.
 
 ## Verification
 

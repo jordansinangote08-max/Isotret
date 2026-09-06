@@ -1,6 +1,6 @@
 # 001 — Preserve opacity feedback under prefers-reduced-motion
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 75bfaf5
 - **Severity**: HIGH
 - **Category**: Accessibility

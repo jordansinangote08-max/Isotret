@@ -1,6 +1,6 @@
 # 003 — Bring outlier press-feedback scales into this repo's subtle range
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 75bfaf5
 - **Severity**: LOW
 - **Category**: Physicality & Cohesion

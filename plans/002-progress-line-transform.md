@@ -1,6 +1,6 @@
 # 002 — Animate the progress line with transform instead of width
 
-- **Status**: TODO
+- **Status**: DONE
 - **Commit**: 75bfaf5
 - **Severity**: MEDIUM
 - **Category**: Performance
