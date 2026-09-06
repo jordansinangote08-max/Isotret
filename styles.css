@@ -134,7 +134,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .today-dose-row .muted { margin: 10px 0 0; }
 
 .btn { min-height: 44px; padding: 0 16px; border-radius: 9px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .18s var(--ease-spring), background .18s ease, border .18s ease; }
-.btn:hover { transform: translateY(-1px); }
 .btn:active { transform: scale(.96); transition-duration: 90ms; }
 
 .btn[aria-busy="true"] {
