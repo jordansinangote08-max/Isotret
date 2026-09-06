@@ -342,7 +342,7 @@ function renderHome() {
   els.progressRing.style.setProperty("--progress", stats.progress.toFixed(2));
   els.ringPercent.textContent = `${formatNumber(stats.progress, 1)}%`;
   els.progressRing.setAttribute("aria-valuenow", String(Math.round(stats.progress)));
-  els.progressLineFill.style.width = `${stats.progress}%`;
+  els.progressLineFill.style.transform = `scaleX(${stats.progress / 100})`;
   els.remainingHome.textContent = `${formatNumber(stats.remaining)} mg`;
   els.daysLeftHome.textContent = stats.remaining <= 0 ? "Complete" : stats.daysLeft ? `~${formatNumber(stats.daysLeft)} days` : "—";
 
@@ -863,6 +863,7 @@ function init() {
   bindEvents();
   showView("home");
   renderAll();
+  els.progressRing.classList.add("ring--animated");
   if (navigator.onLine && cloudConfig.apiKey && cloudConfig.binId) pullFromCloud();
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
