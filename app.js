@@ -270,11 +270,37 @@ function setGreeting() {
   els.greetingTitle.textContent = hour < 12 ? "Good morning!" : hour < 18 ? "Good afternoon!" : "Good evening!";
 }
 
+// Shared enter/exit for the overlay-style UI (modal, mobile menu, toast): removing
+// `hidden` is instant (it's `display: none !important`), so the CSS transition only
+// has something to animate once the element is actually in the layout. Re-entering
+// mid-close (or re-closing mid-open) just re-toggles the class — the browser reverses
+// the in-flight transition from wherever it currently sits, so rapid taps never snap.
+function revealOverlay(element) {
+  clearTimeout(element._concealTimer);
+  element.hidden = false;
+  void element.offsetWidth;
+  element.classList.add("is-visible");
+}
+
+function concealOverlay(element) {
+  element.classList.remove("is-visible");
+  clearTimeout(element._concealTimer);
+  const finish = () => {
+    if (!element.classList.contains("is-visible")) element.hidden = true;
+  };
+  element._concealTimer = setTimeout(finish, 400);
+  element.addEventListener("transitionend", event => {
+    if (event.target !== element) return;
+    clearTimeout(element._concealTimer);
+    finish();
+  }, { once: true });
+}
+
 function showToast(message) {
   clearTimeout(toastTimer);
   els.toast.textContent = message;
-  els.toast.hidden = false;
-  toastTimer = setTimeout(() => { els.toast.hidden = true; }, 2400);
+  revealOverlay(els.toast);
+  toastTimer = setTimeout(() => concealOverlay(els.toast), 2400);
 }
 
 function showView(viewName) {
@@ -289,7 +315,7 @@ function showView(viewName) {
     if (active) btn.setAttribute("aria-current", "page");
     else btn.removeAttribute("aria-current");
   });
-  els.mobileMenu.hidden = true;
+  if (!els.mobileMenu.hidden) concealOverlay(els.mobileMenu);
   els.mobileMenuButton.setAttribute("aria-expanded", "false");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
@@ -517,7 +543,7 @@ function setBackgroundInert(inert) {
 function openDoseModal(entry = null, requestedDate = null) {
   editingEntryId = entry?.id || null;
   modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  els.doseModal.hidden = false;
+  revealOverlay(els.doseModal);
   setBackgroundInert(true);
   document.body.style.overflow = "hidden";
   els.doseModalTitle.textContent = entry ? "Edit dose" : "Log a dose";
@@ -531,7 +557,7 @@ function openDoseModal(entry = null, requestedDate = null) {
 
 function closeDoseModal() {
   editingEntryId = null;
-  els.doseModal.hidden = true;
+  concealOverlay(els.doseModal);
   setBackgroundInert(false);
   document.body.style.overflow = "";
   els.doseFormError.textContent = "";
@@ -768,13 +794,14 @@ function bindEvents() {
 
   [els.desktopThemeToggle, els.mobileThemeToggle, els.preferenceThemeToggle].forEach(button => button.addEventListener("click", toggleTheme));
   els.mobileMenuButton.addEventListener("click", () => {
-    const open = els.mobileMenu.hidden;
-    els.mobileMenu.hidden = !open;
-    els.mobileMenuButton.setAttribute("aria-expanded", String(open));
+    const opening = els.mobileMenu.hidden;
+    if (opening) revealOverlay(els.mobileMenu);
+    else concealOverlay(els.mobileMenu);
+    els.mobileMenuButton.setAttribute("aria-expanded", String(opening));
   });
   document.addEventListener("click", event => {
     if (!els.mobileMenu.hidden && !els.mobileMenu.contains(event.target) && event.target !== els.mobileMenuButton) {
-      els.mobileMenu.hidden = true;
+      concealOverlay(els.mobileMenu);
       els.mobileMenuButton.setAttribute("aria-expanded", "false");
     }
   });
