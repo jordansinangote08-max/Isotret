@@ -5,18 +5,18 @@
   --surface-2: #faf9f6;
   --surface-3: #f0efeb;
   --text: #171a18;
-  --muted: #747773;
+  --muted: #696c68;
   --faint: #a6a8a4;
   --line: #e5e4df;
   --border: #dcdad4;
   --primary: #315f63;
   --primary-2: #244d50;
   --primary-soft: #e8efee;
-  --success: #6f9563;
+  --success: #527346;
   --success-soft: #edf5ea;
-  --danger: #a65a5a;
+  --danger: #9c5252;
   --danger-soft: #f8ecec;
-  --warning: #a4774a;
+  --warning: #855d3a;
   --shadow: 0 18px 50px rgba(30, 42, 38, .07);
   --shadow-soft: 0 4px 16px rgba(30, 42, 38, .05);
   --radius-sm: 10px;
@@ -101,7 +101,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .desktop-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .mobile-brand { display: none; align-items: center; gap: 10px; font-size: 15px; }
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
-.icon-button, .avatar-button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-soft); transition: transform .12s var(--ease-spring), background .15s ease; }
+.icon-button, .avatar-button { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-soft); transition: transform .12s var(--ease-spring), background .15s ease; }
 .icon-button:active, .avatar-button:active { transform: scale(.96); transition-duration: 80ms; }
 .avatar-button { background: var(--primary); color: white; border: none; }
 .menu-only { display: none; }
@@ -374,7 +374,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
   .history-lower-grid, .two-card-grid { grid-template-columns: 1fr; }
   .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; display: grid; grid-template-columns: 1fr 74px 1fr; align-items: end; padding: 8px 24px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--surface) 93%, transparent); border-top: 1px solid var(--line); backdrop-filter: blur(18px); }
   .bottom-nav-item { min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 2px; color: var(--muted); }
-  .bottom-nav-item span { font-size: 22px; }
   .bottom-nav-item small { font-size: 10px; font-weight: 700; }
   .bottom-nav-item.is-active { color: var(--primary); }
   .bottom-add { width: 58px; height: 58px; margin: -20px auto 0; border-radius: 50%; background: var(--primary); color: white; font-size: 28px; box-shadow: 0 12px 26px color-mix(in srgb, var(--primary) 32%, transparent); }
@@ -551,7 +550,6 @@ label {
     gap: 2px;
     color: var(--muted);
   }
-  .bottom-nav-item span { font-size: 21px; line-height: 1; }
   .bottom-nav-item small { font-size: 10px; font-weight: 700; }
   .bottom-nav-item.is-active { color: var(--primary); }
   .bottom-add {
@@ -1774,4 +1772,110 @@ input:focus-visible,
   .stock-alert {
     transition: opacity 150ms ease !important;
   }
+}
+
+
+/* =========================================================
+   ICON SYSTEM — one line-icon family everywhere
+   Text glyphs (moon, hamburger, fullwidth plus, house, chevrons) render
+   differently per platform font and cannot be sized or themed reliably, so
+   every structural icon is now an inline SVG on the same 24px grid.
+========================================================= */
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  display: block;
+}
+
+.icon-button .icon,
+.calendar-arrow .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.fab .icon,
+.bottom-add .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.btn-log {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.chevron {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.chevron .icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* The theme control carries both icons; the active theme decides which shows,
+   so toggling never rewrites markup mid-transition. */
+.theme-switch-icon,
+.theme-icon-button {
+  display: grid;
+  place-items: center;
+}
+
+.theme-switch-icon > .icon,
+.theme-icon-button > .icon {
+  grid-area: 1 / 1;
+}
+
+.theme-switch-icon > .icon:last-child,
+.theme-icon-button > .icon:last-child {
+  display: none;
+}
+
+[data-theme="dark"] .theme-switch-icon > .icon:first-child,
+[data-theme="dark"] .theme-icon-button > .icon:first-child {
+  display: none;
+}
+
+[data-theme="dark"] .theme-switch-icon > .icon:last-child,
+[data-theme="dark"] .theme-icon-button > .icon:last-child {
+  display: block;
+}
+
+/* Mobile tab bar now uses the same icons as the desktop sidebar. */
+.bottom-nav-item .icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+/* Selected-day status: an icon carries the state alongside the text, so the
+   meaning does not rest on the background color alone. */
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.record-status-icon {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.record-status-icon .icon {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Figures that change as doses are logged use tabular numerals so the
+   surrounding layout never jitters. */
+.supply-days strong,
+.supply-meta strong,
+.stock-alert-copy strong {
+  font-variant-numeric: tabular-nums;
 }
