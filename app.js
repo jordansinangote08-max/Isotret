@@ -2,6 +2,10 @@ const STORAGE_KEY = "doseTrackerData_v2";
 const LEGACY_STORAGE_KEY = "doseTrackerData_v1";
 const CLOUD_CONFIG_KEY = "doseTrackerCloudConfig_v1";
 
+// Pill stock thresholds, in days of remaining supply.
+const SUPPLY_WARNING_DAYS = 7;
+const SUPPLY_CRITICAL_DAYS = 3;
+
 const todayPH = () => {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Manila",
@@ -19,7 +23,10 @@ const state = {
     weight: 75,
     plannedDose: 30,
     targetLevel: 135,
-    historyStartDate: ""
+    historyStartDate: "",
+    pillsBought: 0,
+    pillStrengthMg: 0,
+    supplyStartDate: ""
   },
   theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 };
@@ -32,11 +39,13 @@ let historyCursor = monthStartFromKey(todayPH());
 let toastTimer = null;
 let modalReturnFocus = null;
 let cloudRequestInFlight = false;
+let stockAlertSignature = "";
 
 const $ = id => document.getElementById(id);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
 const els = {
+  topbar: document.querySelector(".topbar"),
   views: $$("[data-view]"),
   viewTargets: $$("[data-view-target]"),
   openDoseButtons: $$("[data-open-dose]"),
@@ -67,6 +76,18 @@ const els = {
   remainingHome: $("remainingHome"),
   daysLeftHome: $("daysLeftHome"),
 
+  stockAlert: $("stockAlert"),
+  stockAlertTitle: $("stockAlertTitle"),
+  stockAlertDetail: $("stockAlertDetail"),
+  supplyStatus: $("supplyStatus"),
+  supplyDaysLeft: $("supplyDaysLeft"),
+  supplyPillsLeft: $("supplyPillsLeft"),
+  supplyPerDay: $("supplyPerDay"),
+  supplyLine: document.querySelector(".supply-line"),
+  supplyLineFill: $("supplyLineFill"),
+  supplyNote: $("supplyNote"),
+  supplySetup: $("supplySetup"),
+
   miniPrevMonth: $("miniPrevMonth"),
   miniNextMonth: $("miniNextMonth"),
   miniMonthLabel: $("miniMonthLabel"),
@@ -93,6 +114,11 @@ const els = {
   weightKg: $("weightKg"),
   plannedDose: $("plannedDose"),
   treatmentStartDate: $("treatmentStartDate"),
+  pillsBought: $("pillsBought"),
+  pillStrengthMg: $("pillStrengthMg"),
+  supplyStartDate: $("supplyStartDate"),
+  supplyRefilledToday: $("supplyRefilledToday"),
+  supplyPreview: $("supplyPreview"),
   settingsStatus: $("settingsStatus"),
 
   jsonbinKey: $("jsonbinKey"),
@@ -134,11 +160,17 @@ function normalizeSettings(settings) {
   const plannedDose = Number(settings.plannedDose);
   const targetLevel = Number(settings.targetLevel);
   const startDate = settings.historyStartDate && validDateKey(settings.historyStartDate) ? settings.historyStartDate : "";
+  const pillsBought = Number(settings.pillsBought);
+  const pillStrengthMg = Number(settings.pillStrengthMg);
+  const supplyStartDate = settings.supplyStartDate && validDateKey(settings.supplyStartDate) ? settings.supplyStartDate : "";
   return {
     weight: Number.isFinite(weight) && weight > 0 && weight <= 1000 ? weight : state.settings.weight,
     plannedDose: Number.isFinite(plannedDose) && plannedDose > 0 && plannedDose <= 10000 ? plannedDose : state.settings.plannedDose,
     targetLevel: [120, 135, 150].includes(targetLevel) ? targetLevel : state.settings.targetLevel,
-    historyStartDate: startDate
+    historyStartDate: startDate,
+    pillsBought: Number.isFinite(pillsBought) && pillsBought >= 0 && pillsBought <= 100000 ? pillsBought : 0,
+    pillStrengthMg: Number.isFinite(pillStrengthMg) && pillStrengthMg >= 0 && pillStrengthMg <= 10000 ? pillStrengthMg : 0,
+    supplyStartDate
   };
 }
 
@@ -188,6 +220,38 @@ function computeStats() {
   const progress = targetTotal ? Math.min((totalMg / targetTotal) * 100, 100) : 0;
   const daysLeft = plannedDose ? Math.ceil(remaining / plannedDose) : 0;
   return { totalMg, weight, targetLevel, plannedDose, targetTotal, mgPerKg, remaining, progress, daysLeft };
+}
+
+// Pill stock is a separate calculation from treatment progress: it counts the
+// doses logged since the supply was last topped up, converts them into pills at
+// the strength of one pill, and reports what is left of the pills that were bought.
+function computeSupply() {
+  const pillsBought = Number(state.settings.pillsBought) || 0;
+  const pillStrengthMg = Number(state.settings.pillStrengthMg) || 0;
+  const plannedDose = Number(state.settings.plannedDose) || 0;
+  const since = state.settings.supplyStartDate;
+  const configured = pillsBought > 0 && pillStrengthMg > 0 && plannedDose > 0;
+  if (!configured) return { configured: false, pillsBought, pillStrengthMg, plannedDose, since };
+
+  const pillsPerDay = plannedDose / pillStrengthMg;
+  const mgTaken = state.entries
+    .filter(entry => !since || entry.date >= since)
+    .reduce((sum, entry) => sum + Number(entry.mg || 0), 0);
+  const pillsUsed = mgTaken / pillStrengthMg;
+  const pillsLeft = Math.max(pillsBought - pillsUsed, 0);
+  const daysLeft = Math.floor(pillsLeft / pillsPerDay);
+  const totalDays = Math.floor(pillsBought / pillsPerDay);
+  const used = pillsBought ? Math.min(pillsUsed / pillsBought, 1) : 0;
+  return { configured: true, pillsBought, pillStrengthMg, plannedDose, since, pillsPerDay, pillsUsed, pillsLeft, daysLeft, totalDays, remainingRatio: 1 - used };
+}
+
+function formatPills(value) {
+  const rounded = Math.round(Number(value) * 100) / 100;
+  return formatNumber(rounded, Number.isInteger(rounded) ? 0 : 1);
+}
+
+function plural(count, word) {
+  return `${formatNumber(count)} ${word}${Number(count) === 1 ? "" : "s"}`;
 }
 
 function entriesForDate(key) {
@@ -346,8 +410,93 @@ function renderHome() {
   els.remainingHome.textContent = `${formatNumber(stats.remaining)} mg`;
   els.daysLeftHome.textContent = stats.remaining <= 0 ? "Complete" : stats.daysLeft ? `~${formatNumber(stats.daysLeft)} days` : "—";
 
-
+  renderSupply();
   renderMiniCalendar();
+}
+
+function supplyLevel(supply) {
+  if (!supply.configured) return "none";
+  if (supply.pillsLeft <= 0) return "empty";
+  if (supply.daysLeft <= SUPPLY_CRITICAL_DAYS) return "critical";
+  if (supply.daysLeft <= SUPPLY_WARNING_DAYS) return "warning";
+  return "ok";
+}
+
+function renderSupply() {
+  const supply = computeSupply();
+  els.supplySetup.hidden = supply.configured;
+
+  if (!supply.configured) {
+    els.supplyStatus.textContent = "Add your pills in Settings to see how many days of stock you have.";
+    els.supplyDaysLeft.textContent = "—";
+    els.supplyDaysLeft.dataset.level = "none";
+    els.supplyPillsLeft.textContent = "—";
+    els.supplyPerDay.textContent = "—";
+    els.supplyLine.dataset.level = "none";
+    els.supplyLineFill.style.transform = "scaleX(0)";
+    els.supplyNote.textContent = "Enter the pills you bought and the mg of each pill. Every dose you log is then subtracted from your stock.";
+  } else {
+    const strengthText = formatNumber(supply.pillStrengthMg, supply.pillStrengthMg % 1 ? 1 : 0);
+    els.supplyStatus.textContent = `${plural(supply.pillsBought, "pill")} bought at ${strengthText} mg each.`;
+    els.supplyDaysLeft.textContent = formatNumber(supply.daysLeft);
+    els.supplyDaysLeft.dataset.level = supplyLevel(supply);
+    els.supplyPillsLeft.textContent = formatPills(supply.pillsLeft);
+    els.supplyPerDay.textContent = formatPills(supply.pillsPerDay);
+    els.supplyLine.dataset.level = supplyLevel(supply);
+    els.supplyLineFill.style.transform = `scaleX(${supply.remainingRatio.toFixed(4)})`;
+    els.supplyNote.textContent = supply.since
+      ? `${plural(supply.totalDays, "day")} of stock when full · counting doses logged from ${formatDate(supply.since)}.`
+      : `${plural(supply.totalDays, "day")} of stock when full.`;
+  }
+
+  renderStockAlert(supply);
+}
+
+function renderStockAlert(supply) {
+  const level = supplyLevel(supply);
+  if (level === "none" || level === "ok") {
+    stockAlertSignature = "";
+    if (!els.stockAlert.hidden) concealOverlay(els.stockAlert);
+    return;
+  }
+
+  const pillsText = `${formatPills(supply.pillsLeft)} ${supply.pillsLeft === 1 ? "pill" : "pills"}`;
+  const perDayText = `${formatPills(supply.pillsPerDay)} ${supply.pillsPerDay === 1 ? "pill" : "pills"} a day`;
+  let title;
+  let detail;
+  if (level === "empty") {
+    title = "You are out of pills";
+    detail = "The doses you logged have used up this supply. Refill, then update your pill supply in Settings.";
+  } else if (supply.daysLeft <= 0) {
+    title = "Less than a day of pills left";
+    detail = `${pillsText} left — under one full ${formatNumber(supply.plannedDose)} mg day. Refill now.`;
+  } else if (level === "critical") {
+    title = `Only ${plural(supply.daysLeft, "day")} of pills left`;
+    detail = `${pillsText} left at ${perDayText}. Refill now.`;
+  } else {
+    title = `${plural(supply.daysLeft, "day")} of pills left`;
+    detail = `${pillsText} left at ${perDayText}. Time to buy a refill.`;
+  }
+
+  // Only touch the DOM when the message really changed, so the live region does
+  // not re-announce the same warning on every re-render.
+  const signature = `${level}|${title}|${detail}`;
+  if (signature !== stockAlertSignature) {
+    stockAlertSignature = signature;
+    els.stockAlert.dataset.level = level;
+    els.stockAlertTitle.textContent = title;
+    els.stockAlertDetail.textContent = detail;
+  }
+  if (!els.stockAlert.classList.contains("is-visible")) revealOverlay(els.stockAlert);
+}
+
+// The banner sticks below the top bar, which only sticks itself on narrow
+// screens, so the offset is measured rather than hard-coded.
+function updateStickyOffset() {
+  if (!els.topbar) return;
+  const position = getComputedStyle(els.topbar).position;
+  const offset = position === "sticky" || position === "fixed" ? Math.round(els.topbar.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--sticky-top", `${offset}px`);
 }
 
 function monthStats(cursor) {
@@ -532,7 +681,45 @@ function syncSettingsForm() {
   els.weightKg.value = state.settings.weight;
   els.plannedDose.value = state.settings.plannedDose;
   els.treatmentStartDate.value = state.settings.historyStartDate || "";
+  els.pillsBought.value = state.settings.pillsBought || "";
+  els.pillStrengthMg.value = state.settings.pillStrengthMg || "";
+  els.supplyStartDate.value = state.settings.supplyStartDate || "";
   $$('input[name="targetLevel"]').forEach(radio => { radio.checked = Number(radio.value) === Number(state.settings.targetLevel); });
+  renderSupplyPreview();
+}
+
+// Live preview for the pill-supply fields: it reads the form, not saved state,
+// so the days-of-stock figure updates while the numbers are still being typed.
+function renderSupplyPreview() {
+  const pills = Number(els.pillsBought.value);
+  const strength = Number(els.pillStrengthMg.value);
+  const dose = Number(els.plannedDose.value);
+
+  if (!Number.isFinite(dose) || dose <= 0) {
+    els.supplyPreview.textContent = "Enter your planned daily dose to work out how many pills a day you need.";
+    return;
+  }
+  if (!Number.isFinite(strength) || strength <= 0) {
+    els.supplyPreview.textContent = "Enter the mg of each pill to see how many days of stock you have.";
+    return;
+  }
+
+  const perDay = dose / strength;
+  const strengthText = formatNumber(strength, strength % 1 ? 1 : 0);
+  const perDayText = `${formatPills(perDay)} ${perDay === 1 ? "pill" : "pills"} a day`;
+  const base = `${formatNumber(dose)} mg a day at ${strengthText} mg per pill = ${perDayText}.`;
+
+  if (!Number.isFinite(pills) || pills <= 0) {
+    els.supplyPreview.textContent = `${base} Add how many pills you bought to track your stock.`;
+    return;
+  }
+
+  const lines = [`${base} ${plural(pills, "pill")} = ${plural(Math.floor(pills / perDay), "day")} of stock.`];
+  const saved = computeSupply();
+  if (saved.configured && saved.pillsBought === pills && saved.pillStrengthMg === strength && saved.plannedDose === dose) {
+    lines.push(`Right now: ${formatPills(saved.pillsLeft)} ${saved.pillsLeft === 1 ? "pill" : "pills"} left, about ${plural(saved.daysLeft, "day")}.`);
+  }
+  els.supplyPreview.textContent = lines.join(" ");
 }
 
 function syncCloudForm() {
@@ -662,10 +849,40 @@ function saveSettings(event) {
     els.plannedDose.focus();
     return;
   }
+
+  const pillsBought = els.pillsBought.value.trim() === "" ? 0 : Number(els.pillsBought.value);
+  const pillStrengthMg = els.pillStrengthMg.value.trim() === "" ? 0 : Number(els.pillStrengthMg.value);
+  if (!Number.isFinite(pillsBought) || pillsBought < 0 || pillsBought > 100000) {
+    els.settingsStatus.textContent = "Enter how many pills you bought, from 0 to 100,000.";
+    els.pillsBought.focus();
+    return;
+  }
+  if (!Number.isFinite(pillStrengthMg) || pillStrengthMg < 0 || pillStrengthMg > 10000) {
+    els.settingsStatus.textContent = "Enter a pill strength between 0 and 10,000 mg.";
+    els.pillStrengthMg.focus();
+    return;
+  }
+  if (pillsBought > 0 && pillStrengthMg <= 0) {
+    els.settingsStatus.textContent = "Enter how many mg each pill contains.";
+    els.pillStrengthMg.focus();
+    return;
+  }
+
+  const previousBought = Number(state.settings.pillsBought) || 0;
   state.settings.weight = weight;
   state.settings.plannedDose = plannedDose;
   state.settings.targetLevel = Number(target?.value) || 135;
   state.settings.historyStartDate = els.treatmentStartDate.value || "";
+  state.settings.pillsBought = pillsBought;
+  state.settings.pillStrengthMg = pillStrengthMg;
+  if (!pillsBought) {
+    state.settings.supplyStartDate = "";
+  } else if (els.supplyStartDate.value) {
+    state.settings.supplyStartDate = els.supplyStartDate.value;
+  } else if (pillsBought !== previousBought || !state.settings.supplyStartDate) {
+    // A new pack with no date given starts counting from today.
+    state.settings.supplyStartDate = todayPH();
+  }
   saveLocal();
   renderAll();
   pushToCloud({ silent: true });
@@ -834,6 +1051,26 @@ function bindEvents() {
     }
   });
 
+  [els.pillsBought, els.pillStrengthMg, els.plannedDose, els.supplyStartDate].forEach(input => {
+    input.addEventListener("input", renderSupplyPreview);
+  });
+  els.pillsBought.addEventListener("input", () => {
+    // A first pack needs a day to count from; later refills use the button below.
+    if (!els.supplyStartDate.value && Number(els.pillsBought.value) > 0) {
+      els.supplyStartDate.value = todayPH();
+      renderSupplyPreview();
+    }
+  });
+  els.supplyRefilledToday.addEventListener("click", () => {
+    els.supplyStartDate.value = todayPH();
+    renderSupplyPreview();
+    els.supplyStartDate.focus();
+  });
+
+  window.addEventListener("resize", updateStickyOffset);
+  window.addEventListener("orientationchange", updateStickyOffset);
+  if (els.topbar && "ResizeObserver" in window) new ResizeObserver(updateStickyOffset).observe(els.topbar);
+
   els.exportNav.addEventListener("click", exportData);
   els.mobileExport.addEventListener("click", exportData);
 
@@ -881,6 +1118,7 @@ function init() {
   bindEvents();
   showView("home");
   renderAll();
+  updateStickyOffset();
   els.progressRing.classList.add("ring--animated");
   if (navigator.onLine && cloudConfig.apiKey && cloudConfig.binId) pullFromCloud();
   if ("serviceWorker" in navigator) {

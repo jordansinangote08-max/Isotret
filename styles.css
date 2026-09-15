@@ -1508,3 +1508,270 @@ input:focus-visible,
     forced-color-adjust: none;
   }
 }
+
+/* =========================================================
+   PILL SUPPLY — stock warning banner and days-of-stock card
+========================================================= */
+
+/* The warning is pinned to the top of Home so it stays in view while the page
+   scrolls. The top bar only sticks on narrow screens, so the offset it parks
+   under is measured in JS and published as --sticky-top. */
+.stock-alert {
+  position: sticky;
+  top: var(--sticky-top, 0px);
+  z-index: 35;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity .22s ease, transform .3s var(--ease-spring);
+}
+
+.stock-alert.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stock-alert:not(.is-visible) {
+  transition: opacity .16s ease, transform .16s var(--ease-spring-out);
+}
+
+.stock-alert[data-level="critical"],
+.stock-alert[data-level="empty"] {
+  border-color: color-mix(in srgb, var(--danger) 42%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+.stock-alert-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--warning) 22%, var(--surface));
+  color: var(--warning);
+}
+
+.stock-alert[data-level="critical"] .stock-alert-icon,
+.stock-alert[data-level="empty"] .stock-alert-icon {
+  background: color-mix(in srgb, var(--danger) 22%, var(--surface));
+  color: var(--danger);
+}
+
+.stock-alert-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.stock-alert-copy strong,
+.stock-alert-copy span {
+  display: block;
+}
+
+.stock-alert-copy strong {
+  font-size: var(--type-small);
+  font-weight: 700;
+}
+
+.stock-alert-copy span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: 1.4;
+}
+
+.stock-alert-action {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--type-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stock-alert[data-level="critical"] .stock-alert-action,
+.stock-alert[data-level="empty"] .stock-alert-action {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.stock-alert-action:hover {
+  background: var(--surface-2);
+}
+
+@media (max-width: 560px) {
+  .stock-alert {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .stock-alert-action {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* Home card: what is left of the pills that were bought. */
+.supply-card {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.supply-figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.supply-days strong,
+.supply-days span,
+.supply-meta strong,
+.supply-meta span {
+  display: block;
+}
+
+.supply-days strong {
+  font-size: var(--type-data);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.supply-days strong[data-level="warning"] {
+  color: var(--warning);
+}
+
+.supply-days strong[data-level="critical"],
+.supply-days strong[data-level="empty"] {
+  color: var(--danger);
+}
+
+.supply-days span,
+.supply-meta span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: var(--type-caption);
+}
+
+.supply-meta {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.supply-meta strong {
+  font-size: var(--type-subhead);
+  font-weight: 700;
+}
+
+.supply-line {
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.supply-line > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .5s var(--ease-spring), background-color .3s ease;
+}
+
+.supply-line[data-level="warning"] > span {
+  background: var(--warning);
+}
+
+.supply-line[data-level="critical"] > span,
+.supply-line[data-level="empty"] > span {
+  background: var(--danger);
+}
+
+.supply-note {
+  margin: 0;
+  font-size: var(--type-caption);
+  line-height: 1.45;
+}
+
+#supplySetup {
+  justify-self: start;
+}
+
+/* Settings: the two purchase fields sit side by side where there is room. */
+.supply-field {
+  display: grid;
+  gap: var(--space-4);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.supply-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.supply-date-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.supply-date-row .btn {
+  white-space: nowrap;
+}
+
+.supply-preview {
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--type-small);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .supply-grid,
+  .supply-date-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .supply-figures {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .supply-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* The banner's fade is the signal that it appeared; keep it under reduced
+   motion even though the movement snaps. */
+@media (prefers-reduced-motion: reduce) {
+  .stock-alert {
+    transition: opacity 150ms ease !important;
+  }
+}
