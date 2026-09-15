@@ -6,11 +6,11 @@ const CLOUD_CONFIG_KEY = "doseTrackerCloudConfig_v1";
 const SUPPLY_WARNING_DAYS = 7;
 const SUPPLY_CRITICAL_DAYS = 3;
 
-const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 const RECORD_STATUS_ICONS = {
-  taken: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-4.9"/></svg>`,
-  missed: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>`,
-  none: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/></svg>`
+  taken: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" /></svg>`,
+  missed: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="10" /> <path d="m15 9-6 6" /> <path d="m9 9 6 6" /></svg>`,
+  none: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="10" /> <path d="M8 12h8" /></svg>`
 };
 
 const todayPH = () => {
@@ -412,7 +412,10 @@ function renderHome() {
   const todayTotal = totalForDate(today);
 
   els.todayPlannedDose.textContent = formatNumber(stats.plannedDose);
-  els.todayStatus.textContent = todayTotal > 0 ? `${formatNumber(todayTotal)} mg recorded today.` : "No dose recorded yet today.";
+  // The card already shows the planned dose in large type, so today's state is a
+  // badge rather than a second sentence repeating a milligram figure.
+  els.todayStatus.textContent = todayTotal > 0 ? `Taken · ${formatNumber(todayTotal)} mg` : "Not taken yet";
+  els.todayStatus.dataset.state = todayTotal > 0 ? "taken" : "none";
 
   els.targetWeightHome.textContent = `${formatNumber(stats.weight, stats.weight % 1 ? 1 : 0)} kg`;
   els.targetDoseHome.textContent = `${formatNumber(stats.plannedDose)} mg/day`;
@@ -479,21 +482,21 @@ function renderStockAlert(supply) {
   }
 
   const pillsText = `${formatPills(supply.pillsLeft)} ${supply.pillsLeft === 1 ? "pill" : "pills"}`;
-  const perDayText = `${formatPills(supply.pillsPerDay)} ${supply.pillsPerDay === 1 ? "pill" : "pills"} a day`;
+  const perDayText = `${formatPills(supply.pillsPerDay)} a day`;
   let title;
   let detail;
   if (level === "empty") {
     title = "You are out of pills";
-    detail = "The doses you logged have used up this supply. Refill, then update your pill supply in Settings.";
+    detail = "Refill, then update your supply";
   } else if (supply.daysLeft <= 0) {
-    title = "Less than a day of pills left";
-    detail = `${pillsText} left — under one full ${formatNumber(supply.plannedDose)} mg day. Refill now.`;
+    title = "Less than a day left";
+    detail = `${pillsText} left · ${formatNumber(supply.plannedDose)} mg a day`;
   } else if (level === "critical") {
     title = `Only ${plural(supply.daysLeft, "day")} of pills left`;
-    detail = `${pillsText} left at ${perDayText}. Refill now.`;
+    detail = `${pillsText} left · ${perDayText}`;
   } else {
     title = `${plural(supply.daysLeft, "day")} of pills left`;
-    detail = `${pillsText} left at ${perDayText}. Time to buy a refill.`;
+    detail = `${pillsText} left · ${perDayText}`;
   }
 
   // Only touch the DOM when the message really changed, so the live region does

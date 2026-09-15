@@ -1449,17 +1449,15 @@ input:focus-visible,
 
 /* The warning is pinned to the top of Home so it stays in view while the page
    scrolls. The top bar only sticks on narrow screens, so the offset it parks
-   under is measured in JS and published as --sticky-top. */
+   under is measured in JS and published as --sticky-top.
+
+   It is one tappable row: on a 375px phone the stacked version cost 127px of a
+   667px screen, permanently. */
 .stock-alert {
   position: sticky;
   top: var(--sticky-top, 0px);
   z-index: 35;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
   border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--warning) 12%, var(--surface));
@@ -1478,6 +1476,23 @@ input:focus-visible,
   transition: opacity .16s ease, transform .16s var(--ease-spring-out);
 }
 
+.stock-alert-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  color: inherit;
+}
+
+.stock-alert-body:active {
+  transform: scale(.99);
+  transition: transform 100ms ease-out;
+}
+
 .stock-alert[data-level="critical"],
 .stock-alert[data-level="empty"] {
   border-color: color-mix(in srgb, var(--danger) 42%, transparent);
@@ -1487,71 +1502,62 @@ input:focus-visible,
 .stock-alert-icon {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--warning) 22%, var(--surface));
   color: var(--warning);
 }
 
 .stock-alert[data-level="critical"] .stock-alert-icon,
 .stock-alert[data-level="empty"] .stock-alert-icon {
-  background: color-mix(in srgb, var(--danger) 22%, var(--surface));
   color: var(--danger);
 }
 
-.stock-alert-icon svg {
-  width: 1.15rem;
-  height: 1.15rem;
+.stock-alert-icon .icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.stock-alert-copy {
+  min-width: 0;
 }
 
 .stock-alert-copy strong,
 .stock-alert-copy span {
   display: block;
+  overflow-wrap: anywhere;
 }
 
 .stock-alert-copy strong {
   font-size: var(--type-small);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .stock-alert-copy span {
-  margin-top: 2px;
+  margin-top: 1px;
   color: var(--muted);
   font-size: var(--type-caption);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
-.stock-alert-action {
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--type-caption);
-  font-weight: 700;
-  white-space: nowrap;
+.stock-alert-chevron {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
 }
 
-.stock-alert[data-level="critical"] .stock-alert-action,
-.stock-alert[data-level="empty"] .stock-alert-action {
-  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+.stock-alert-chevron .icon {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
-.stock-alert-action:hover {
-  background: var(--surface-2);
-}
-
-@media (max-width: 560px) {
-  .stock-alert {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: var(--space-2) var(--space-3);
-    padding: var(--space-3);
-  }
-
-  .stock-alert-action {
-    grid-column: 2;
-    justify-self: start;
+/* Phones: the detail line stays to one line so the banner never grows past
+   two lines of text. */
+@media (max-width: 640px) {
+  .stock-alert-copy span {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
@@ -2078,4 +2084,122 @@ input:focus-visible,
   .supply-card {
     padding: var(--space-4);
   }
+}
+
+/* =========================================================
+   PHONE DENSITY — the fold has to earn its space
+   On a 375x667 phone the Today and Progress cards spent 600px between them
+   on five numbers, pushing the calendar three screens down.
+========================================================= */
+
+@media (max-width: 640px) {
+  .home-flow {
+    gap: var(--space-3);
+  }
+
+  .home-section-heading p {
+    margin-top: 2px;
+  }
+
+  /* Today: the dose and its action read as one block instead of a column of
+     evenly spaced rows. */
+  .today-card {
+    gap: var(--space-3);
+    min-height: 0;
+  }
+
+  .today-dose-row {
+    gap: var(--space-3);
+  }
+
+  .dose-big {
+    margin-top: var(--space-2);
+  }
+
+  .dose-big strong {
+    font-size: 40px;
+  }
+
+  .dose-big span {
+    font-size: 20px;
+  }
+
+  .today-dose-row .muted {
+    margin-top: 4px;
+  }
+
+  /* Progress: the ring and the totals sit side by side rather than stacked
+     with a full-width bar between them. */
+  .progress-top {
+    margin-top: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .ring {
+    width: 84px;
+    height: 84px;
+  }
+
+  .progress-total {
+    font-size: 30px;
+    margin-top: 2px;
+  }
+
+  .progress-line {
+    margin: var(--space-3) 0;
+  }
+
+  .progress-mini-grid > div {
+    padding-top: var(--space-3);
+  }
+
+  .supply-card {
+    gap: var(--space-3);
+  }
+
+  .recent-history-panel .section-heading-row p {
+    display: none;
+  }
+}
+
+/* Top-bar controls are plain icon buttons. Bordered discs made two small
+   controls read as heavily as the content cards below them. */
+.topbar .icon-button {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.topbar .icon-button:active {
+  background: var(--surface-3);
+}
+
+.topbar .icon-button .icon {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+/* Today's state reads as a badge beside the heading. */
+.today-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.status-pill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--type-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.status-pill[data-state="taken"] {
+  background: var(--success-soft);
+  color: var(--success);
 }
