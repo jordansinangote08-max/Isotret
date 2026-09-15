@@ -53,7 +53,7 @@
 }
 
 * { box-sizing: border-box; }
-html { color-scheme: light; scroll-behavior: smooth; }
+html { color-scheme: light; scroll-behavior: auto; }
 html[data-theme="dark"] { color-scheme: dark; }
 body { margin: 0; min-height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 button, input { font: inherit; color: inherit; }
@@ -274,22 +274,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 
 .settings-card { padding: clamp(20px, 3vw, 30px); }
 .settings-form { display: grid; gap: 18px; max-width: 700px; }
-.field { display: grid; gap: 8px; }
-.field > span, .field legend { font-size: 12px; font-weight: 700; }
-.field input { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
-.input-shell { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
-.input-shell input { border: 0; background: transparent; }
-.input-shell > span { align-self: stretch; display: grid; place-items: center; padding: 0 14px; border-left: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 700; }
-.choice-field { border: 0; padding: 0; margin: 0; }
-.choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-.choice-grid label { position: relative; cursor: pointer; }
-.choice-grid input { position: absolute; opacity: 0; pointer-events: none; }
-.choice-grid label > span { min-height: 70px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); display: grid; place-items: center; align-content: center; gap: 2px; }
-.choice-grid input:checked + span { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
-.choice-grid input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent); outline-offset: 3px; }
-.choice-grid strong, .choice-grid small { display: block; }
-.choice-grid small { color: var(--muted); }
-.field-hint { margin: 4px 0 10px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .form-error { min-height: 1.3em; color: var(--danger); }
 .form-status { min-height: 18px; margin: 0; font-size: 12px; color: var(--muted); }
 .two-card-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0, .9fr); gap: 18px; }
@@ -305,7 +289,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .switch-button[aria-pressed="true"] { background: var(--primary); }
 .switch-button[aria-pressed="true"] span { transform: translateX(21px); }
 
-.fab { display: none; position: fixed; right: 24px; bottom: 24px; z-index: 60; width: 58px; height: 58px; border-radius: 50%; background: var(--primary); color: white; box-shadow: 0 16px 30px color-mix(in srgb, var(--primary) 32%, transparent); font-size: 30px; }
 .bottom-nav { display: none; }
 .bottom-nav-item, .bottom-add { transition: transform .12s var(--ease-spring), color .15s ease; }
 .bottom-nav-item:active { transform: scale(.96); transition-duration: 80ms; }
@@ -377,7 +360,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
   .bottom-nav-item small { font-size: 10px; font-weight: 700; }
   .bottom-nav-item.is-active { color: var(--primary); }
   .bottom-add { width: 58px; height: 58px; margin: -20px auto 0; border-radius: 50%; background: var(--primary); color: white; font-size: 28px; box-shadow: 0 12px 26px color-mix(in srgb, var(--primary) 32%, transparent); }
-  .fab { display: none !important; }
   .modal { align-items: end; padding: 0; }
   .modal-panel {
     width: 100%; border-radius: 24px 24px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
@@ -393,10 +375,8 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
   .history-weekdays { font-size: 9px; }
   .history-day { min-height: 52px; }
   .history-day .day-record { display: none; }
-  .choice-grid { grid-template-columns: 1fr; }
   .button-row .btn { flex: 1 1 100%; }
 }
-
 
 /* =========================================================
    V4 DESIGN POLISH - latest desktop/mobile redesign
@@ -450,7 +430,6 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
   .history-status-dot { width: 7px; height: 7px; min-width: 7px; min-height: 7px; }
   .history-day .day-record { display: none; }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -563,7 +542,6 @@ label {
     line-height: 1;
     box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 26%, transparent);
   }
-  .fab { display: none !important; }
 }
 
 /* Touch-specific sizing: keep the visual density compact while the actual
@@ -584,8 +562,7 @@ label {
   .mobile-menu button { padding-block: 10px; }
 
   /* Prevent iOS Safari from zooming the viewport when a form control focuses. */
-  .field input,
-  .input-shell input {
+  .list-row-value input {
     font-size: 16px;
   }
 }
@@ -875,18 +852,6 @@ label {
   border: 0;
 }
 
-/* Inputs remain clearly interactive without appearing raised. */
-.field input,
-.input-shell,
-.choice-grid label > span {
-  background: var(--surface);
-}
-
-.choice-grid input:checked + span {
-  background: var(--primary-soft);
-  color: var(--primary);
-}
-
 /* Switches and secondary controls should recede until used. */
 .theme-switch,
 .btn-secondary,
@@ -945,7 +910,6 @@ label {
   transition-duration: 160ms;
 }
 
-
 /* =========================================================
    IMPECCABLE TYPESET — native product typography system
 ========================================================= */
@@ -984,15 +948,7 @@ body {
   text-wrap: balance;
 }
 
-.desktop-heading p,
-.page-heading p,
-.home-section-heading p,
-.section-heading-row p,
-.field-hint,
-.sync-info-card p,
-.sync-info-card li,
-.prose-card p,
-.prose-card li {
+.desktop-heading p,.page-heading p,.home-section-heading p,.section-heading-row p,.sync-info-card p,.sync-info-card li,.prose-card p,.prose-card li {
   font-size: var(--type-small);
   line-height: 1.55;
 }
@@ -1089,26 +1045,11 @@ body {
 }
 
 /* Controls use one compact UI role instead of multiple 10–13px variants. */
-.nav-item,
-.btn,
-.btn-small,
-.theme-switch,
-.mobile-menu button,
-.field > span,
-.field legend,
-.input-shell > span,
-.form-status,
-.record-status,
-.preference-row p,
-.sync-badge strong {
+.nav-item,.btn,.btn-small,.theme-switch,.mobile-menu button,.form-status,.record-status,.preference-row p,.sync-badge strong {
   font-size: var(--type-small);
 }
 
-.nav-item,
-.btn,
-.mobile-menu button,
-.field > span,
-.field legend {
+.nav-item,.btn,.mobile-menu button {
   font-weight: var(--weight-semibold);
 }
 
@@ -1416,7 +1357,6 @@ body {
   }
 }
 
-
 /* =========================================================
    IMPECCABLE POLISH — final ship-readiness corrections
 ========================================================= */
@@ -1435,10 +1375,6 @@ body {
 [data-theme="dark"] .btn-primary,
 [data-theme="dark"] .brand-logo,
 [data-theme="dark"] .bottom-add,
-[data-theme="dark"] .fab {
-  color: #111413;
-}
-
 /* Complete the interaction-state vocabulary. */
 button:disabled,
 .btn:disabled {
@@ -1496,7 +1432,7 @@ input:focus-visible,
   .nav-item.is-active,
   .bottom-nav-item.is-active,
   .history-day.is-selected,
-  .choice-grid input:checked + span {
+  .segmented label:has(input:checked) {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
@@ -1710,46 +1646,6 @@ input:focus-visible,
   justify-self: start;
 }
 
-/* Settings: the two purchase fields sit side by side where there is room. */
-.supply-field {
-  display: grid;
-  gap: var(--space-4);
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-.supply-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-.supply-date-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-.supply-date-row .btn {
-  white-space: nowrap;
-}
-
-.supply-preview {
-  margin: var(--space-3) 0 0;
-  color: var(--muted);
-  font-size: var(--type-small);
-  line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .supply-grid,
-  .supply-date-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 560px) {
   .supply-figures {
     display: grid;
@@ -1774,7 +1670,6 @@ input:focus-visible,
   }
 }
 
-
 /* =========================================================
    ICON SYSTEM — one line-icon family everywhere
    Text glyphs (moon, hamburger, fullwidth plus, house, chevrons) render
@@ -1795,7 +1690,6 @@ input:focus-visible,
   height: 1.15rem;
 }
 
-.fab .icon,
 .bottom-add .icon {
   width: 1.5rem;
   height: 1.5rem;
@@ -1878,4 +1772,310 @@ input:focus-visible,
 .supply-meta strong,
 .stock-alert-copy strong {
   font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   iOS PASS — grouped lists, materials, type, press feedback
+========================================================= */
+
+/* --- Type: tracking is size-specific. Large figures read too loose at
+       default tracking; small labels read too tight. --- */
+.dose-big strong,
+.progress-total,
+.supply-days strong,
+.desktop-heading h1,
+.page-heading h2 {
+  letter-spacing: -0.022em;
+}
+
+.ring strong,
+.supply-meta strong,
+.month-summary-grid strong,
+.progress-mini-grid strong {
+  letter-spacing: -0.015em;
+}
+
+.list-group-title,
+.bottom-nav-item small,
+.nav-label {
+  letter-spacing: 0.01em;
+}
+
+.page-heading h2,
+.desktop-heading h1 {
+  line-height: 1.12;
+}
+
+/* --- Grouped inset lists: the iOS Settings pattern. One card per group,
+       hairline separators inside, the label on the left and the value on
+       the right, section title above and the explanation below. --- */
+.list-group {
+  display: grid;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.list-group-title {
+  margin: 0;
+  padding: 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--type-small);
+  font-weight: 600;
+}
+
+.list-group-footer {
+  margin: 0;
+  padding: 0 var(--space-4);
+  color: var(--muted);
+  font-size: var(--type-small);
+  line-height: 1.45;
+}
+
+.list-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Hairline separators stop short of the leading edge, the way iOS insets them. */
+.list-row + .list-row {
+  box-shadow: inset 0 1px 0 var(--line);
+}
+
+.list-row-label {
+  font-size: var(--type-body);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.list-row-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+  justify-content: flex-end;
+  color: var(--muted);
+}
+
+/* The row is the surface, so the field itself carries no chrome. */
+.list-row-value input {
+  min-width: 0;
+  width: 100%;
+  max-width: 11rem;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: right;
+  font-size: var(--type-body);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.list-row-value input::placeholder {
+  color: var(--faint);
+}
+
+.list-row-value input:focus {
+  outline: none;
+}
+
+/* Focus moves to the whole row, which reads better than a ring around a
+   borderless field. */
+.list-row:focus-within {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent);
+  border-radius: calc(var(--radius-lg) - 6px);
+}
+
+.list-row-value em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: var(--type-small);
+}
+
+.list-row.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+}
+
+.list-row.stacked .list-row-value {
+  justify-content: flex-start;
+}
+
+.list-row.stacked .list-row-value input {
+  max-width: none;
+  text-align: left;
+}
+
+.list-row-action {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--primary);
+  font-size: var(--type-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- Segmented control replaces the three target-dose cards --- */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: 12px;
+}
+
+.segmented label {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: var(--type-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background .18s ease, color .18s ease;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.segmented input:checked + span {
+  color: var(--text);
+}
+
+.segmented label:has(input:checked) {
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.settings-form {
+  gap: var(--space-6);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* --- Sheet: a grabber reads as "drag me down", the iOS convention --- */
+.sheet-grabber {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  .sheet-grabber {
+    display: block;
+    width: 36px;
+    height: 5px;
+    margin: -8px auto 14px;
+    border-radius: 999px;
+    background: var(--surface-3);
+  }
+}
+
+/* --- Materials: chrome is a translucent layer content passes under --- */
+.topbar,
+.bottom-nav {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar,
+  .bottom-nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface);
+  }
+}
+
+/* --- Tab bar: flat, the way iOS draws it. The centre action sat above the
+       bar on a coloured shadow, which read as Material. --- */
+@media (max-width: 960px) {
+  .bottom-add {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto;
+    box-shadow: none;
+  }
+
+  .bottom-add .icon {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+}
+
+/* --- Press feedback: on press-down, fast, and never on hover alone --- */
+.list-row-action:active,
+.segmented label:active,
+.btn:active,
+.nav-item:active,
+.treatment-summary:active,
+.mini-day:active,
+.history-day:active {
+  transform: scale(.97);
+  transition: transform 100ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list-row-action:active,
+  .segmented label:active,
+  .treatment-summary:active,
+  .mini-day:active,
+  .history-day:active {
+    transform: none;
+  }
+}
+
+#doseForm {
+  gap: var(--space-4);
+}
+
+#doseForm .list-card {
+  margin-top: var(--space-1);
+}
+
+/* Phones: the Today card held a large empty gap between its heading and its
+   action. Tightening it keeps the fold useful. */
+@media (max-width: 640px) {
+  .today-card {
+    gap: var(--space-4);
+  }
+
+  .today-card,
+  .progress-card,
+  .supply-card {
+    padding: var(--space-4);
+  }
 }
