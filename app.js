@@ -6,6 +6,13 @@ const CLOUD_CONFIG_KEY = "doseTrackerCloudConfig_v1";
 const SUPPLY_WARNING_DAYS = 7;
 const SUPPLY_CRITICAL_DAYS = 3;
 
+const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const RECORD_STATUS_ICONS = {
+  taken: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-4.9"/></svg>`,
+  missed: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>`,
+  none: `<svg class="icon" ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/></svg>`
+};
+
 const todayPH = () => {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Manila",
@@ -94,6 +101,8 @@ const els = {
   miniCalendar: $("miniCalendar"),
   recentSelectedDate: $("recentSelectedDate"),
   recentSelectedStatus: $("recentSelectedStatus"),
+  recentSelectedIcon: $("recentSelectedIcon"),
+  recentSelectedText: $("recentSelectedText"),
   summaryTaken: $("summaryTaken"),
   summaryTotal: $("summaryTotal"),
   summaryConsistency: $("summaryConsistency"),
@@ -311,7 +320,6 @@ function saveCloudConfig() {
 function applyTheme() {
   document.documentElement.setAttribute("data-theme", state.theme);
   const dark = state.theme === "dark";
-  els.mobileThemeToggle.textContent = dark ? "☀" : "☾";
   els.mobileThemeToggle.setAttribute("aria-pressed", String(dark));
   els.mobileThemeToggle.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
   els.preferenceThemeToggle.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
@@ -606,15 +614,18 @@ function updateRecentSelected() {
   els.recentSelectedDate.textContent = formatDate(selectedDate);
   const total = totalForDate(selectedDate);
   if (total > 0) {
-    els.recentSelectedStatus.textContent = `✓ Dose recorded • ${formatNumber(total)} mg`;
-    els.recentSelectedStatus.style.background = "var(--success-soft)";
+    setRecordStatus("taken", `Dose recorded • ${formatNumber(total)} mg`, "var(--success-soft)");
   } else if (state.settings.historyStartDate && selectedDate >= state.settings.historyStartDate && selectedDate < todayPH()) {
-    els.recentSelectedStatus.textContent = "× No dose recorded";
-    els.recentSelectedStatus.style.background = "var(--danger-soft)";
+    setRecordStatus("missed", "No dose recorded", "var(--danger-soft)");
   } else {
-    els.recentSelectedStatus.textContent = "No dose recorded";
-    els.recentSelectedStatus.style.background = "var(--surface-2)";
+    setRecordStatus("none", "No dose recorded", "var(--surface-2)");
   }
+}
+
+function setRecordStatus(kind, message, background) {
+  els.recentSelectedIcon.innerHTML = RECORD_STATUS_ICONS[kind] || "";
+  els.recentSelectedText.textContent = message;
+  els.recentSelectedStatus.style.background = background;
 }
 
 function renderHistory() {
