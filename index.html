@@ -275,39 +275,83 @@
 
         <section class="view" data-view="settings" aria-labelledby="settingsTitle">
           <div class="page-heading"><div><h2 id="settingsTitle">Treatment settings</h2><p>Update the values used to calculate your progress.</p></div></div>
-          <article class="card settings-card">
-            <form id="settingsForm" class="settings-form">
-              <label class="field"><span>Weight</span><div class="input-shell"><input id="weightKg" type="number" min="1" max="1000" step="0.1" inputmode="decimal" required><span>kg</span></div></label>
-              <label class="field"><span>Planned daily dose</span><div class="input-shell"><input id="plannedDose" type="number" min="1" max="10000" step="1" inputmode="decimal" required><span>mg/day</span></div></label>
-              <label class="field"><span>Treatment start date</span><input id="treatmentStartDate" type="date"></label>
-              <fieldset class="field supply-field">
-                <legend>Pill supply</legend>
-                <p class="field-hint" id="supplyFieldHint">Enter the pills you bought and the strength of each pill. Days of stock are worked out from your planned daily dose and go down every time you log a dose.</p>
-                <div class="supply-grid" aria-describedby="supplyFieldHint">
-                  <label class="field"><span>Bought pills</span><div class="input-shell"><input id="pillsBought" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="90"><span>pills</span></div></label>
-                  <label class="field"><span>Strength of each pill</span><div class="input-shell"><input id="pillStrengthMg" type="number" min="0" max="10000" step="0.5" inputmode="decimal" placeholder="10"><span>mg/pill</span></div></label>
+          <form id="settingsForm" class="settings-form">
+            <section class="list-group">
+              <h3 class="list-group-title">Treatment</h3>
+              <div class="list-card">
+                <label class="list-row">
+                  <span class="list-row-label">Weight</span>
+                  <span class="list-row-value"><input id="weightKg" type="number" min="1" max="1000" step="0.1" inputmode="decimal" required><em>kg</em></span>
+                </label>
+                <label class="list-row">
+                  <span class="list-row-label">Daily dose</span>
+                  <span class="list-row-value"><input id="plannedDose" type="number" min="1" max="10000" step="1" inputmode="decimal" required><em>mg</em></span>
+                </label>
+                <label class="list-row">
+                  <span class="list-row-label">Start date</span>
+                  <span class="list-row-value"><input id="treatmentStartDate" type="date"></span>
+                </label>
+              </div>
+            </section>
+
+            <fieldset class="list-group">
+              <legend class="list-group-title">Pill supply</legend>
+              <div class="list-card">
+                <label class="list-row">
+                  <span class="list-row-label">Bought pills</span>
+                  <span class="list-row-value"><input id="pillsBought" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="90"><em>pills</em></span>
+                </label>
+                <label class="list-row">
+                  <span class="list-row-label">Each pill</span>
+                  <span class="list-row-value"><input id="pillStrengthMg" type="number" min="0" max="10000" step="0.5" inputmode="decimal" placeholder="10"><em>mg</em></span>
+                </label>
+                <label class="list-row">
+                  <span class="list-row-label">Counting from</span>
+                  <span class="list-row-value"><input id="supplyStartDate" type="date"></span>
+                </label>
+                <div class="list-row">
+                  <span class="list-row-label">Just refilled?</span>
+                  <button class="list-row-action" id="supplyRefilledToday" type="button">Use today</button>
                 </div>
-                <label class="field"><span>Counting stock from</span><div class="supply-date-row"><input id="supplyStartDate" type="date"><button class="btn btn-secondary" id="supplyRefilledToday" type="button">Refilled today</button></div></label>
-                <p class="supply-preview" id="supplyPreview" aria-live="polite">Enter your pills and their strength to see how many days of stock you have.</p>
-              </fieldset>
-              <fieldset class="field choice-field"><legend>Target cumulative dose</legend><p class="field-hint" id="targetLevelHint">Use only the cumulative target provided by your healthcare professional.</p><div class="choice-grid" aria-describedby="targetLevelHint"><label><input type="radio" name="targetLevel" value="120"><span><strong>120</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="135"><span><strong>135</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="150"><span><strong>150</strong><small>mg/kg</small></span></label></div></fieldset>
-              <button class="btn btn-primary" type="submit">Save settings</button>
-              <p class="form-status" id="settingsStatus" aria-live="polite"></p>
-            </form>
-          </article>
+              </div>
+              <p class="list-group-footer" id="supplyPreview" aria-live="polite">Enter your pills and their strength to see how many days of stock you have.</p>
+            </fieldset>
+
+            <fieldset class="list-group">
+              <legend class="list-group-title">Target cumulative dose</legend>
+              <div class="segmented" role="group">
+                <label><input type="radio" name="targetLevel" value="120"><span>120</span></label>
+                <label><input type="radio" name="targetLevel" value="135"><span>135</span></label>
+                <label><input type="radio" name="targetLevel" value="150"><span>150</span></label>
+              </div>
+              <p class="list-group-footer">mg/kg — use only the cumulative target given by your healthcare professional.</p>
+            </fieldset>
+
+            <button class="btn btn-primary btn-block" type="submit">Save settings</button>
+            <p class="form-status" id="settingsStatus" aria-live="polite"></p>
+          </form>
         </section>
 
         <section class="view" data-view="sync" aria-labelledby="syncTitle">
           <div class="page-heading"><div><h2 id="syncTitle">Cloud backup</h2><p>Your data is always stored locally first. JSONBin sync is optional.</p></div></div>
           <div class="two-card-grid">
-            <article class="card settings-card">
-              <div class="settings-form">
-                <label class="field"><span>JSONBin API key</span><input id="jsonbinKey" type="password" autocomplete="off" spellcheck="false" placeholder="X-Master-Key"></label>
-                <label class="field"><span>Bin ID</span><input id="jsonbinBinId" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="24-character Bin ID"></label>
-                <div class="button-row"><button class="btn btn-primary" id="connectCloud" type="button">Connect &amp; load</button><button class="btn btn-secondary" id="syncCloudNow" type="button">Sync now</button></div>
-                <p class="form-status" id="cloudStatus" aria-live="polite">Not connected.</p>
-              </div>
-            </article>
+            <div class="settings-form">
+              <section class="list-group">
+                <h3 class="list-group-title">JSONBin</h3>
+                <div class="list-card">
+                  <label class="list-row stacked">
+                    <span class="list-row-label">API key</span>
+                    <span class="list-row-value"><input id="jsonbinKey" type="password" autocomplete="off" spellcheck="false" placeholder="X-Master-Key"></span>
+                  </label>
+                  <label class="list-row stacked">
+                    <span class="list-row-label">Bin ID</span>
+                    <span class="list-row-value"><input id="jsonbinBinId" type="text" autocomplete="off" spellcheck="false" maxlength="24" placeholder="24-character Bin ID"></span>
+                  </label>
+                </div>
+              </section>
+              <div class="button-row"><button class="btn btn-primary" id="connectCloud" type="button">Connect &amp; load</button><button class="btn btn-secondary" id="syncCloudNow" type="button">Sync now</button></div>
+              <p class="form-status" id="cloudStatus" aria-live="polite">Not connected.</p>
+            </div>
             <article class="card sync-info-card">
               <h3>Local-first storage</h3>
               <p>Your tracker works even without cloud sync. Every change is saved to this browser first.</p>
@@ -335,8 +379,6 @@
     </div>
   </div>
 
-  <button class="fab" id="fabLogDose" type="button" aria-label="Log a dose" data-open-dose><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-
   <nav class="bottom-nav" aria-label="Mobile primary navigation">
     <button class="bottom-nav-item is-active" data-view-target="home" type="button" aria-current="page"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg><small>Home</small></button>
     <button class="bottom-add" type="button" aria-label="Log a dose" data-open-dose><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -345,11 +387,20 @@
 
   <div class="modal" id="doseModal" hidden>
     <div class="modal-backdrop" data-close-dose></div>
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="doseModalTitle">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="doseModalTitle" tabindex="-1">
+      <span class="sheet-grabber" aria-hidden="true"></span>
       <div class="modal-header"><div><h2 id="doseModalTitle">Log a dose</h2></div><button class="icon-button" type="button" data-close-dose aria-label="Close dose entry"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <form id="doseForm" class="settings-form">
-        <label class="field"><span>Date</span><input id="doseDate" type="date" required aria-describedby="doseFormError"></label>
-        <label class="field"><span>Dose taken</span><div class="input-shell"><input id="doseMg" type="number" min="0" max="10000" step="1" inputmode="decimal" required aria-describedby="doseFormError"><span>mg</span></div></label>
+        <div class="list-card">
+          <label class="list-row">
+            <span class="list-row-label">Date</span>
+            <span class="list-row-value"><input id="doseDate" type="date" required aria-describedby="doseFormError"></span>
+          </label>
+          <label class="list-row">
+            <span class="list-row-label">Dose taken</span>
+            <span class="list-row-value"><input id="doseMg" type="number" min="0" max="10000" step="1" inputmode="decimal" required aria-describedby="doseFormError"><em>mg</em></span>
+          </label>
+        </div>
         <p class="form-status form-error" id="doseFormError" role="alert" aria-live="assertive"></p>
         <div class="button-row"><button class="btn btn-primary" id="doseSubmit" type="submit">Add entry</button><button class="btn btn-secondary" id="doseCancel" type="button" data-close-dose>Cancel</button></div>
         <button class="btn btn-danger-ghost" id="deleteDose" type="button" hidden>Delete this entry</button>

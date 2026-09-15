@@ -47,6 +47,8 @@ let toastTimer = null;
 let modalReturnFocus = null;
 let cloudRequestInFlight = false;
 let stockAlertSignature = "";
+let activeView = "home";
+let stickyOffsetFrame = 0;
 
 const $ = id => document.getElementById(id);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -137,6 +139,7 @@ const els = {
   cloudStatus: $("cloudStatus"),
 
   doseModal: $("doseModal"),
+  dosePanel: document.querySelector("#doseModal .modal-panel"),
   doseForm: $("doseForm"),
   doseModalTitle: $("doseModalTitle"),
   doseDate: $("doseDate"),
@@ -376,6 +379,7 @@ function showToast(message) {
 }
 
 function showView(viewName) {
+  activeView = viewName;
   els.views.forEach(view => {
     const active = view.dataset.view === viewName;
     view.classList.toggle("is-active", active);
@@ -389,11 +393,17 @@ function showView(viewName) {
   });
   if (!els.mobileMenu.hidden) concealOverlay(els.mobileMenu);
   els.mobileMenuButton.setAttribute("aria-expanded", "false");
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-  if (viewName === "history") renderHistory();
-  if (viewName === "settings") syncSettingsForm();
-  if (viewName === "sync") syncCloudForm();
+  window.scrollTo({ top: 0, behavior: "auto" });
+  renderActiveView();
+}
+
+// Only the visible view is rendered. Logging a dose used to rebuild both
+// calendars (84 buttons) even when neither was on screen.
+function renderActiveView() {
+  if (activeView === "history") renderHistory();
+  else if (activeView === "settings") syncSettingsForm();
+  else if (activeView === "sync") syncCloudForm();
+  else renderHome();
 }
 
 function renderHome() {
@@ -500,6 +510,14 @@ function renderStockAlert(supply) {
 
 // The banner sticks below the top bar, which only sticks itself on narrow
 // screens, so the offset is measured rather than hard-coded.
+function queueStickyOffset() {
+  if (stickyOffsetFrame) return;
+  stickyOffsetFrame = requestAnimationFrame(() => {
+    stickyOffsetFrame = 0;
+    updateStickyOffset();
+  });
+}
+
 function updateStickyOffset() {
   if (!els.topbar) return;
   const position = getComputedStyle(els.topbar).position;
@@ -740,9 +758,7 @@ function syncCloudForm() {
 
 function renderAll() {
   applyTheme();
-  renderHome();
-  renderHistory();
-  syncSettingsForm();
+  renderActiveView();
 }
 
 function modalFocusableElements() {
@@ -751,7 +767,7 @@ function modalFocusableElements() {
 }
 
 function setBackgroundInert(inert) {
-  [document.querySelector(".shell"), $("fabLogDose"), document.querySelector(".bottom-nav")].forEach(element => {
+  [document.querySelector(".shell"), document.querySelector(".bottom-nav")].forEach(element => {
     if (element) element.inert = inert;
   });
 }
@@ -768,7 +784,7 @@ function openDoseModal(entry = null, requestedDate = null) {
   els.doseDate.value = entry?.date || requestedDate || todayPH();
   els.doseMg.value = entry?.mg ?? state.settings.plannedDose;
   els.doseFormError.textContent = "";
-  requestAnimationFrame(() => els.doseDate.focus());
+  requestAnimationFrame(() => els.dosePanel.focus());
 }
 
 function closeDoseModal() {
@@ -1078,9 +1094,9 @@ function bindEvents() {
     els.supplyStartDate.focus();
   });
 
-  window.addEventListener("resize", updateStickyOffset);
-  window.addEventListener("orientationchange", updateStickyOffset);
-  if (els.topbar && "ResizeObserver" in window) new ResizeObserver(updateStickyOffset).observe(els.topbar);
+  window.addEventListener("resize", queueStickyOffset);
+  window.addEventListener("orientationchange", queueStickyOffset);
+  if (els.topbar && "ResizeObserver" in window) new ResizeObserver(queueStickyOffset).observe(els.topbar);
 
   els.exportNav.addEventListener("click", exportData);
   els.mobileExport.addEventListener("click", exportData);
