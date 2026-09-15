@@ -115,6 +115,17 @@
         <section class="view is-active" data-view="home" aria-labelledby="homeTitle">
           <h2 class="sr-only" id="homeTitle">Home</h2>
 
+          <div class="stock-alert" id="stockAlert" role="status" aria-live="polite" data-level="warning" hidden>
+            <span class="stock-alert-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>
+            </span>
+            <div class="stock-alert-copy">
+              <strong id="stockAlertTitle">Pill stock is running low</strong>
+              <span id="stockAlertDetail">Refill soon.</span>
+            </div>
+            <button class="stock-alert-action" type="button" data-view-target="settings">Update supply</button>
+          </div>
+
           <div class="home-flow">
             <div class="home-primary-grid">
               <article class="card today-card">
@@ -155,6 +166,28 @@
                 </div>
               </article>
             </div>
+
+            <article class="card supply-card">
+              <div class="home-section-heading">
+                <h3>Pill supply</h3>
+                <p id="supplyStatus">Add your pills in Settings to see how many days of stock you have.</p>
+              </div>
+
+              <div class="supply-figures">
+                <div class="supply-days">
+                  <strong id="supplyDaysLeft">—</strong>
+                  <span>Days of stock left</span>
+                </div>
+                <div class="supply-meta">
+                  <div><strong id="supplyPillsLeft">—</strong><span>Pills left</span></div>
+                  <div><strong id="supplyPerDay">—</strong><span>Pills per day</span></div>
+                </div>
+              </div>
+
+              <div class="supply-line" aria-hidden="true"><span id="supplyLineFill"></span></div>
+              <p class="supply-note muted" id="supplyNote">Every dose you log is subtracted from your stock.</p>
+              <button class="btn btn-secondary inline-btn" id="supplySetup" type="button" data-view-target="settings">Set up pill supply</button>
+            </article>
 
             <button class="treatment-summary" type="button" data-view-target="settings" aria-label="Open treatment settings">
               <div class="treatment-summary-copy">
@@ -247,6 +280,16 @@
               <label class="field"><span>Weight</span><div class="input-shell"><input id="weightKg" type="number" min="1" max="1000" step="0.1" inputmode="decimal" required><span>kg</span></div></label>
               <label class="field"><span>Planned daily dose</span><div class="input-shell"><input id="plannedDose" type="number" min="1" max="10000" step="1" inputmode="decimal" required><span>mg/day</span></div></label>
               <label class="field"><span>Treatment start date</span><input id="treatmentStartDate" type="date"></label>
+              <fieldset class="field supply-field">
+                <legend>Pill supply</legend>
+                <p class="field-hint" id="supplyFieldHint">Enter the pills you bought and the strength of each pill. Days of stock are worked out from your planned daily dose and go down every time you log a dose.</p>
+                <div class="supply-grid" aria-describedby="supplyFieldHint">
+                  <label class="field"><span>Bought pills</span><div class="input-shell"><input id="pillsBought" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="90"><span>pills</span></div></label>
+                  <label class="field"><span>Strength of each pill</span><div class="input-shell"><input id="pillStrengthMg" type="number" min="0" max="10000" step="0.5" inputmode="decimal" placeholder="10"><span>mg/pill</span></div></label>
+                </div>
+                <label class="field"><span>Counting stock from</span><div class="supply-date-row"><input id="supplyStartDate" type="date"><button class="btn btn-secondary" id="supplyRefilledToday" type="button">Refilled today</button></div></label>
+                <p class="supply-preview" id="supplyPreview" aria-live="polite">Enter your pills and their strength to see how many days of stock you have.</p>
+              </fieldset>
               <fieldset class="field choice-field"><legend>Target cumulative dose</legend><p class="field-hint" id="targetLevelHint">Use only the cumulative target provided by your healthcare professional.</p><div class="choice-grid" aria-describedby="targetLevelHint"><label><input type="radio" name="targetLevel" value="120"><span><strong>120</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="135"><span><strong>135</strong><small>mg/kg</small></span></label><label><input type="radio" name="targetLevel" value="150"><span><strong>150</strong><small>mg/kg</small></span></label></div></fieldset>
               <button class="btn btn-primary" type="submit">Save settings</button>
               <p class="form-status" id="settingsStatus" aria-live="polite"></p>
