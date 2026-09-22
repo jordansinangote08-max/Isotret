@@ -2203,3 +2203,92 @@ input:focus-visible,
   background: var(--success-soft);
   color: var(--success);
 }
+
+/* =========================================================
+   TAB BAR — one glyph row, so every item lines up
+   The centre action centred nothing: .icon is a block, the button had no
+   centring, and the plus sat 6.2px left of its own circle. All three items
+   now share a fixed 30px glyph row with a label under it.
+========================================================= */
+
+@media (max-width: 960px) {
+  .bottom-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    padding-inline: var(--space-2);
+  }
+
+  .bottom-nav-item,
+  .bottom-add {
+    display: grid;
+    grid-template-rows: 30px auto;
+    justify-items: center;
+    align-items: center;
+    align-content: center;
+    gap: 3px;
+    min-height: 52px;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 1px 6px;
+    /* The old circular button carried font-size: 28px, whose line box made its
+       label row 4px taller than the other two items'. */
+    font-size: 11px;
+    line-height: 1.2;
+    background: none;
+    box-shadow: none;
+    border-radius: var(--radius-md);
+  }
+
+  .bottom-nav-item .icon {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  /* The primary action keeps its filled badge, sized to the glyph row so its
+     centre sits on the same line as the other two icons. */
+  .bottom-add-badge {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--surface);
+  }
+
+  .bottom-add-badge .icon {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .bottom-nav-item small,
+  .bottom-add small {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+  }
+
+  .bottom-add small {
+    color: var(--muted);
+  }
+}
+
+[data-theme="dark"] .bottom-add-badge {
+  color: #111413;
+}
+
+/* =========================================================
+   PHONE HOME — Today, Progress and Pill supply only
+   The treatment summary repeats Settings, and the month calendar with its
+   Taken / Total / Consistency row repeats the History tab, which is one tap
+   away in the bar below.
+========================================================= */
+
+@media (max-width: 960px) {
+  .home-flow > .treatment-summary,
+  .home-flow > .recent-history-panel {
+    display: none;
+  }
+}

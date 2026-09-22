@@ -48,6 +48,9 @@ let modalReturnFocus = null;
 let cloudRequestInFlight = false;
 let stockAlertSignature = "";
 let activeView = "home";
+// Phones show Today, Progress and Pill supply only; the month calendar and the
+// treatment summary are a tab and a menu item away.
+const COMPACT_HOME = window.matchMedia("(max-width: 960px)");
 let stickyOffsetFrame = 0;
 
 const $ = id => document.getElementById(id);
@@ -432,7 +435,7 @@ function renderHome() {
   els.daysLeftHome.textContent = stats.remaining <= 0 ? "Complete" : stats.daysLeft ? `~${formatNumber(stats.daysLeft)} days` : "—";
 
   renderSupply();
-  renderMiniCalendar();
+  if (!COMPACT_HOME.matches) renderMiniCalendar();
 }
 
 function supplyLevel(supply) {
@@ -1095,6 +1098,10 @@ function bindEvents() {
     els.supplyStartDate.value = todayPH();
     renderSupplyPreview();
     els.supplyStartDate.focus();
+  });
+
+  COMPACT_HOME.addEventListener("change", () => {
+    if (activeView === "home") renderHome();
   });
 
   window.addEventListener("resize", queueStickyOffset);
