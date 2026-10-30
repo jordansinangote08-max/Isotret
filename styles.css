@@ -79,7 +79,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .sidebar-nav { display: grid; gap: 6px; }
 .nav-item { width: 100%; min-height: 46px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 11px; color: var(--text); text-align: left; font-size: 14px; font-weight: 600; transition: background .18s ease, color .18s ease, box-shadow .18s ease, transform .12s var(--ease-spring); }
 .nav-item svg { width: 20px; height: 20px; flex: none; }
-.nav-item:hover { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .nav-item:hover { background: var(--surface-2); } }
 .nav-item:active { transform: scale(.97); transition-duration: 80ms; }
 .nav-item.is-active { background: var(--primary); color: white; box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 18%, transparent); }
 .nav-label { margin: 18px 12px 4px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 700; }
@@ -114,7 +114,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 }
 .mobile-menu.is-visible { opacity: 1; transform: scale(1) translateY(0); }
 .mobile-menu button { width: 100%; text-align: left; padding: 12px; border-radius: 9px; font-weight: 600; transition: background .15s ease, transform .1s var(--ease-spring); }
-.mobile-menu button:hover { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .mobile-menu button:hover { background: var(--surface-2); } }
 .mobile-menu button:active { transform: scale(.97); transition-duration: 80ms; }
 
 .content-area { padding: 12px clamp(22px, 3vw, 40px) 40px; }
@@ -189,7 +189,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .treatment-summary-values strong, .treatment-summary-values small { display: block; }
 .treatment-summary-values strong { font-size: 13px; }
 .treatment-summary-values small { margin-top: 3px; color: var(--muted); font-size: 10px; }
-.treatment-summary:hover { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .treatment-summary:hover { background: var(--surface-2); } }
 
 .progress-card { padding: 24px; min-height: 100%; display: flex; flex-direction: column; }
 .progress-top { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
@@ -255,7 +255,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
 .history-weekdays { margin-top: 18px; font-size: 11px; }
 .history-calendar { margin-top: 8px; gap: 7px; }
 .history-day { min-height: 74px; border: 1px solid transparent; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; background: var(--surface-2); text-align: left; transition: border-color .15s ease, transform .12s var(--ease-spring); }
-.history-day:hover { border-color: var(--border); }
+@media (hover: hover) and (pointer: fine) { .history-day:hover { border-color: var(--border); } }
 .history-day:active { transform: scale(.96); transition-duration: 80ms; }
 .history-day.is-outside { color: var(--faint); opacity: .55; }
 .history-day.is-selected { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
@@ -391,7 +391,7 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3
   .sidebar .theme-switch, .sidebar .sync-badge { color: inherit; }
   .sidebar .nav-label { opacity: .62; }
   .sidebar .nav-item svg { color: #eef7f3; }
-  .sidebar .nav-item:hover { background: rgba(255,255,255,.08); }
+  @media (hover: hover) and (pointer: fine) { .sidebar .nav-item:hover { background: rgba(255,255,255,.08); } }
   .sidebar .nav-item.is-active {
     background: rgba(255,255,255,.12);
     color: #fff;
@@ -569,9 +569,6 @@ label {
 
 /* Hover effects should not be the feedback mechanism on touch hardware. */
 @media (hover: none) {
-  .btn:hover { transform: none; }
-  .history-day:hover { border-color: transparent; }
-  .mobile-menu button:hover { background: transparent; }
 
   .btn:active,
   .calendar-arrow:active,
@@ -731,12 +728,16 @@ label {
   box-shadow: none;
 }
 
-.btn:hover {
-  transform: none;
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    transform: none;
+  }
 }
 
-.btn-primary:hover {
-  background: var(--primary-2);
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--primary-2);
+  }
 }
 
 .icon-button,
@@ -745,8 +746,10 @@ label {
   background: transparent;
 }
 
-.icon-button:hover {
-  background: var(--surface-2);
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover {
+    background: var(--surface-2);
+  }
 }
 
 /* Sidebar: keep identity, remove the decorative gradient and glowing active state. */
@@ -756,8 +759,10 @@ label {
     border-right: 0;
   }
 
-  .sidebar .nav-item:hover {
-    background: rgba(255, 255, 255, .065);
+  @media (hover: hover) and (pointer: fine) {
+    .sidebar .nav-item:hover {
+      background: rgba(255, 255, 255, .065);
+    }
   }
 
   .sidebar .nav-item.is-active {
@@ -798,8 +803,10 @@ label {
   background: transparent;
 }
 
-.treatment-summary:hover {
-  background: var(--surface-2);
+@media (hover: hover) and (pointer: fine) {
+  .treatment-summary:hover {
+    background: var(--surface-2);
+  }
 }
 
 /* Reduce heavy display treatment while keeping the key dose number as the anchor. */
@@ -827,8 +834,10 @@ label {
   border: 1px solid var(--line);
 }
 
-.calendar-arrow:hover {
-  background: var(--surface-2);
+@media (hover: hover) and (pointer: fine) {
+  .calendar-arrow:hover {
+    background: var(--surface-2);
+  }
 }
 
 .history-day {
@@ -836,9 +845,11 @@ label {
   border-color: transparent;
 }
 
-.history-day:hover {
-  background: var(--surface-2);
-  border-color: transparent;
+@media (hover: hover) and (pointer: fine) {
+  .history-day:hover {
+    background: var(--surface-2);
+    border-color: transparent;
+  }
 }
 
 .history-day.is-selected {
@@ -2323,12 +2334,6 @@ input:focus-visible,
 .toast { transition: opacity 200ms ease, transform 240ms var(--ease-out); }
 .mobile-menu { transition: opacity 150ms ease, transform 180ms var(--ease-out); }
 
-/* Hover feedback only where a real pointer can hover; taps never leave sticky highlights. */
-@media (hover: none) {
-  .nav-item:not(.is-active):hover, .treatment-summary:hover, .calendar-arrow:hover,
-  .icon-button:hover, .history-day:not(.is-selected):hover { background: transparent; }
-  .btn-primary:hover { background: var(--primary); }
-}
 
 
 @media (prefers-reduced-motion: reduce) {
@@ -2440,4 +2445,28 @@ body, .card, .topbar, .bottom-nav, .sidebar {
 #currentPills {
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   MOBILE NATIVE — remove the "this is a website" tells
+========================================================= */
+html {
+  -webkit-tap-highlight-color: transparent; /* no gray flash on tap; :active gives the feedback */
+  -webkit-text-size-adjust: 100%;           /* no font inflation in landscape */
+}
+
+/* An app, not a document: no pull-to-refresh or page rubber band behind the UI. */
+html, body { overscroll-behavior: none; }
+
+/* Controls aren't content: long-press shouldn't select labels or pop a callout. */
+button, [role="button"], .nav-item, .bottom-nav-item, .bottom-add,
+.segmented label, .list-row-action, .history-day, .mini-day, .sheet-grabber {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* iOS zooms into any field under 16px and never zooms back out. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
 }
