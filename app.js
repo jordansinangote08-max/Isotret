@@ -336,7 +336,9 @@ function applyTheme() {
   els.preferenceThemeToggle.setAttribute("aria-pressed", String(dark));
   els.desktopThemeToggle.setAttribute("aria-pressed", String(dark));
   if (els.desktopThemeLabel) els.desktopThemeLabel.textContent = dark ? "Light mode" : "Dark mode";
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#171b19" : "#315f63");
+  // The status bar should continue the top bar, which is the page background on phones.
+  // The app's own toggle overrides the OS scheme, so both scheme-specific tags follow it.
+  document.querySelectorAll('meta[name="theme-color"]').forEach(meta => meta.setAttribute("content", dark ? "#111413" : "#f6f5f1"));
 }
 
 function toggleTheme() {

@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#315f63" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f5f1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111413" />
+  <meta name="color-scheme" content="light dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Dose Tracker" />
@@ -265,11 +267,11 @@
               <div class="list-card">
                 <label class="list-row">
                   <span class="list-row-label">Weight</span>
-                  <span class="list-row-value"><input id="weightKg" type="number" min="1" max="1000" step="0.1" inputmode="decimal" required><em>kg</em></span>
+                  <span class="list-row-value"><input id="weightKg" enterkeyhint="done" type="number" min="1" max="1000" step="0.1" inputmode="decimal" required><em>kg</em></span>
                 </label>
                 <label class="list-row">
                   <span class="list-row-label">Daily dose</span>
-                  <span class="list-row-value"><input id="plannedDose" type="number" min="1" max="10000" step="1" inputmode="decimal" required><em>mg</em></span>
+                  <span class="list-row-value"><input id="plannedDose" enterkeyhint="done" type="number" min="1" max="10000" step="1" inputmode="decimal" required><em>mg</em></span>
                 </label>
                 <label class="list-row">
                   <span class="list-row-label">Start date</span>
@@ -287,12 +289,12 @@
                 </div>
                 <div class="list-row">
                   <label class="list-row-label" for="addPillsInput">Add bought pills</label>
-                  <span class="list-row-value"><input id="addPillsInput" type="number" min="1" max="100000" step="1" inputmode="numeric" placeholder="30"><em>pills</em></span>
+                  <span class="list-row-value"><input id="addPillsInput" enterkeyhint="go" type="number" min="1" max="100000" step="1" inputmode="numeric" placeholder="30"><em>pills</em></span>
                   <button class="list-row-action" id="addPillsButton" type="button">Add</button>
                 </div>
                 <label class="list-row">
                   <span class="list-row-label">Each pill</span>
-                  <span class="list-row-value"><input id="pillStrengthMg" type="number" min="0" max="10000" step="0.5" inputmode="decimal" placeholder="10"><em>mg</em></span>
+                  <span class="list-row-value"><input id="pillStrengthMg" enterkeyhint="done" type="number" min="0" max="10000" step="0.5" inputmode="decimal" placeholder="10"><em>mg</em></span>
                 </label>
                 <!-- Running total behind "Current pills"; set by Add bought pills, not edited by hand. -->
                 <div hidden>
@@ -395,7 +397,7 @@
           </label>
           <label class="list-row">
             <span class="list-row-label">Dose taken</span>
-            <span class="list-row-value"><input id="doseMg" type="number" min="0" max="10000" step="1" inputmode="decimal" required aria-describedby="doseFormError"><em>mg</em></span>
+            <span class="list-row-value"><input id="doseMg" enterkeyhint="done" type="number" min="0" max="10000" step="1" inputmode="decimal" required aria-describedby="doseFormError"><em>mg</em></span>
           </label>
         </div>
         <p class="form-status form-error" id="doseFormError" role="alert" aria-live="assertive"></p>
