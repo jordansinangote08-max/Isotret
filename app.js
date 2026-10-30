@@ -132,6 +132,9 @@ const els = {
   pillStrengthMg: $("pillStrengthMg"),
   supplyStartDate: $("supplyStartDate"),
   supplyRefilledToday: $("supplyRefilledToday"),
+  currentPills: $("currentPills"),
+  addPillsInput: $("addPillsInput"),
+  addPillsButton: $("addPillsButton"),
   supplyPreview: $("supplyPreview"),
   settingsStatus: $("settingsStatus"),
 
@@ -765,6 +768,49 @@ function syncCloudForm() {
 function renderAll() {
   applyTheme();
   renderActiveView();
+  renderCurrentPills();
+}
+
+// Current pills is read-only: it is what's left of the stock after logged doses.
+// Pills you buy are added on top of it instead of replacing the total.
+function renderCurrentPills() {
+  if (!els.currentPills) return;
+  const supply = computeSupply();
+  els.currentPills.textContent = supply.configured ? formatPills(supply.pillsLeft) : "0";
+  els.currentPills.title = supply.configured ? `About ${plural(supply.daysLeft, "day")} of stock` : "No pills added yet";
+}
+
+function addBoughtPills() {
+  const input = els.addPillsInput;
+  const count = Number(input.value);
+  if (!input.value.trim() || !Number.isFinite(count) || count <= 0 || count > 100000) {
+    els.settingsStatus.textContent = "Enter how many pills you bought, from 1 to 100,000.";
+    input.focus();
+    return;
+  }
+  const strength = Number(els.pillStrengthMg.value) || Number(state.settings.pillStrengthMg) || 0;
+  if (strength <= 0) {
+    els.settingsStatus.textContent = "Enter how many mg each pill contains, then press Add.";
+    els.pillStrengthMg.focus();
+    return;
+  }
+  state.settings.pillStrengthMg = strength;
+  const before = computeSupply();
+  if (!before.configured || !state.settings.supplyStartDate) {
+    state.settings.pillsBought = count;
+    state.settings.supplyStartDate = todayPH();
+  } else {
+    // If stock had run out, start from zero so the old shortfall doesn't eat the new pills.
+    const rawLeft = before.pillsBought - before.pillsUsed;
+    state.settings.pillsBought = (rawLeft < 0 ? before.pillsUsed : before.pillsBought) + count;
+  }
+  saveLocal();
+  input.value = "";
+  syncSettingsForm();
+  renderAll();
+  pushToCloud({ silent: true });
+  els.settingsStatus.textContent = `Added ${plural(count, "pill")}. You now have ${formatPills(computeSupply().pillsLeft)}.`;
+  showToast(`Added ${plural(count, "pill")}`);
 }
 
 function modalFocusableElements() {
@@ -1093,6 +1139,10 @@ function bindEvents() {
       els.supplyStartDate.value = todayPH();
       renderSupplyPreview();
     }
+  });
+  els.addPillsButton.addEventListener("click", addBoughtPills);
+  els.addPillsInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") { event.preventDefault(); addBoughtPills(); }
   });
   els.supplyRefilledToday.addEventListener("click", () => {
     els.supplyStartDate.value = todayPH();
