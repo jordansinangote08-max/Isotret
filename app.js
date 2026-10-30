@@ -1148,11 +1148,168 @@ function bindEvents() {
   window.addEventListener("offline", () => setCloudStatus("Offline. Changes remain saved locally.", "error"));
 }
 
+/* =========================================================
+   FLUID SHEET — drag the dose sheet down to dismiss (phones)
+   Tracks the finger 1:1, rubber-bands upward, projects the
+   flick's momentum to decide close vs. stay, and hands the
+   release velocity to a spring so there is no seam.
+========================================================= */
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// Apple's momentum projection (Designing Fluid Interfaces, WWDC 2018).
+function projectMomentum(velocityPxPerSec, decelerationRate = 0.998) {
+  return (velocityPxPerSec / 1000) * decelerationRate / (1 - decelerationRate);
+}
+
+function rubberband(overshoot, dimension, constant = 0.55) {
+  return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
+}
+
+// Damped spring in Apple's terms: response (s) and damping ratio.
+function springTo({ from, to, velocity = 0, response = 0.32, damping = 1, onUpdate, onDone }) {
+  const stiffness = Math.pow((2 * Math.PI) / response, 2);
+  const friction = (4 * Math.PI * damping) / response;
+  let x = from - to;
+  let v = velocity;
+  let last = performance.now();
+  let frame = 0;
+  const step = now => {
+    const dt = Math.min((now - last) / 1000, 1 / 30);
+    last = now;
+    const a = -stiffness * x - friction * v;
+    v += a * dt;
+    x += v * dt;
+    if (Math.abs(x) < 0.5 && Math.abs(v) < 20) {
+      onUpdate(to, 0);
+      onDone?.();
+      return;
+    }
+    onUpdate(to + x, v);
+    frame = requestAnimationFrame(step);
+  };
+  frame = requestAnimationFrame(step);
+  return { stop: () => cancelAnimationFrame(frame), value: () => to + x, velocity: () => v };
+}
+
+function initSheetGesture() {
+  const modal = els.doseModal;
+  const panel = els.dosePanel;
+  const backdrop = modal.querySelector(".modal-backdrop");
+  if (!panel || !backdrop) return;
+
+  let pointerId = null;
+  let startY = 0;
+  let startOffset = 0;
+  let offset = 0;
+  let dragging = false;
+  let history = [];
+  let spring = null;
+
+  const isSheet = () => getComputedStyle(modal).alignItems === "end";
+  const height = () => panel.getBoundingClientRect().height || 1;
+
+  function apply(y) {
+    offset = y;
+    panel.style.transform = `translate3d(0, ${y}px, 0)`;
+    backdrop.style.opacity = String(Math.max(0, 1 - Math.max(y, 0) / height()));
+  }
+
+  function release() {
+    panel.style.transform = "";
+    panel.style.transition = "";
+    backdrop.style.opacity = "";
+    offset = 0;
+  }
+
+  panel.addEventListener("pointerdown", event => {
+    if (!isSheet() || modal.hidden || event.button > 0) return;
+    if (event.target.closest("input, textarea, select, button:not([data-close-dose]), a, label")) return;
+    // Grab a sheet that is still settling: start from where it is on screen.
+    if (spring) {
+      startOffset = spring.value();
+      spring.stop();
+      spring = null;
+    } else {
+      startOffset = offset;
+    }
+    pointerId = event.pointerId;
+    startY = event.clientY;
+    dragging = false;
+    history = [{ y: event.clientY, t: event.timeStamp }];
+  });
+
+  panel.addEventListener("pointermove", event => {
+    if (event.pointerId !== pointerId) return;
+    const delta = event.clientY - startY;
+    if (!dragging) {
+      if (Math.abs(delta) < 8) return;          // hysteresis before committing
+      if (panel.scrollTop > 0 && delta > 0) { pointerId = null; return; } // let content scroll
+      dragging = true;
+      panel.setPointerCapture(event.pointerId);
+      panel.style.transition = "none";
+    }
+    let y = startOffset + delta;
+    if (y < 0) y = rubberband(y, height());      // resist pulling up past the top
+    apply(y);
+    history.push({ y: event.clientY, t: event.timeStamp });
+    if (history.length > 6) history.shift();
+    event.preventDefault();
+  });
+
+  function finish(event) {
+    if (event.pointerId !== pointerId) return;
+    pointerId = null;
+    if (!dragging) return;
+    dragging = false;
+
+    const first = history[0];
+    const lastPoint = history[history.length - 1];
+    const dt = Math.max(lastPoint.t - first.t, 1);
+    const velocity = ((lastPoint.y - first.y) / dt) * 1000; // px/s
+    const projected = offset + projectMomentum(velocity);
+    const h = height();
+    const shouldClose = projected > h * 0.5 || velocity > 900;
+
+    if (prefersReducedMotion.matches) {
+      if (shouldClose) { release(); closeDoseModal(); } else { release(); }
+      return;
+    }
+
+    const target = shouldClose ? h : 0;
+    spring = springTo({
+      from: offset,
+      to: target,
+      velocity,
+      response: 0.3,
+      damping: shouldClose ? 1 : 0.85,   // a touch of give only when snapping back from a throw
+      onUpdate: y => apply(y),
+      onDone: () => {
+        spring = null;
+        if (shouldClose) {
+          panel.style.transition = "none";
+          closeDoseModal();
+          // Let the overlay finish hiding before the panel resets to its CSS rest state.
+          setTimeout(release, 420);
+        } else {
+          release();
+        }
+      }
+    });
+  }
+
+  panel.addEventListener("pointerup", finish);
+  panel.addEventListener("pointercancel", finish);
+}
+
+// iOS Safari only applies :active while a touch listener exists; this makes press feedback instant.
+document.addEventListener("touchstart", () => {}, { passive: true });
+
 function init() {
   loadLocal();
   loadCloudConfig();
   setGreeting();
   bindEvents();
+  initSheetGesture();
   showView("home");
   renderAll();
   updateStickyOffset();
