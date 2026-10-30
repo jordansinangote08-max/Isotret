@@ -2436,3 +2436,8 @@ body, .card, .topbar, .bottom-nav, .sidebar {
   .modal.is-visible .modal-panel,
   .modal:not(.is-visible) .modal-panel { transform: none; transition: none; }
 }
+
+#currentPills {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}

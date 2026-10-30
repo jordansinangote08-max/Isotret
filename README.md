@@ -27,7 +27,7 @@ The app automatically checks the old local-storage key `doseTrackerData_v1`, so 
 
 ## Pill supply
 
-In **Settings → Pill supply**, enter how many pills you bought and the strength of each pill. The tracker divides your planned daily dose by the pill strength to get pills per day, so 90 pills of 10 mg at 30 mg/day reads as 30 days of stock. Every dose you log is subtracted from that stock, and once 7 days or less remain a warning banner stays pinned to the top of the Home screen while you scroll. After a refill, update the pill count and use **Refilled today** so the countdown restarts from that date.
+In **Settings → Pill supply**, set the strength of each pill once, then type how many pills you bought in **Add bought pills** and press **Add**. The pills are added on top of your **Current pills**, which is read-only and goes down with every dose you log. The tracker divides your planned daily dose by the pill strength to get pills per day, so 90 pills of 10 mg at 30 mg/day reads as 30 days of stock. Once 7 days or less remain, a warning banner stays pinned to the top of the Home screen while you scroll.
 
 ## Cloud sync
 
