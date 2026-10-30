@@ -1374,7 +1374,8 @@ body {
 /* Dark primary surfaces need dark ink; white on #7ea6a6 is only ~2.66:1. */
 [data-theme="dark"] .btn-primary,
 [data-theme="dark"] .brand-logo,
-[data-theme="dark"] .bottom-add,
+[data-theme="dark"] .bottom-add { color: #0e1d1c; }
+
 /* Complete the interaction-state vocabulary. */
 button:disabled,
 .btn:disabled {
@@ -2291,4 +2292,45 @@ input:focus-visible,
   .home-flow > .recent-history-panel {
     display: none;
   }
+}
+
+
+/* =========================================================
+   POLISH — motion and interaction pass
+========================================================= */
+:root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+
+/* One press scale everywhere, fast and on press only. */
+.icon-button:active, .avatar-button:active, .calendar-arrow:active,
+.bottom-nav-item:active, .bottom-add:active, .mobile-menu button:active {
+  transform: scale(.97);
+  transition: transform 100ms var(--ease-out);
+}
+
+/* Name the properties; border shorthand -> border-color. */
+.btn { transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease; }
+
+/* Toggles: no overshoot, under 200ms. */
+.switch-thumb, .switch-button span { transition: transform 180ms var(--ease-out); }
+.switch-track, .switch-button { transition: background-color 180ms ease; }
+
+/* Data fills: quick, decisive settle. */
+.ring.ring--animated { transition: --progress 320ms var(--ease-out); }
+.progress-line span { transition: transform 280ms var(--ease-out); }
+.supply-line > span { transition: transform 300ms var(--ease-out), background-color 200ms ease; }
+
+/* Toast and menu: enter with ease-out, exit faster. */
+.toast { transition: opacity 200ms ease, transform 240ms var(--ease-out); }
+.mobile-menu { transition: opacity 150ms ease, transform 180ms var(--ease-out); }
+
+/* Hover feedback only where a real pointer can hover; taps never leave sticky highlights. */
+@media (hover: none) {
+  .nav-item:not(.is-active):hover, .treatment-summary:hover, .calendar-arrow:hover,
+  .icon-button:hover, .history-day:not(.is-selected):hover { background: transparent; }
+  .btn-primary:hover { background: var(--primary); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-thumb, .switch-button span, .supply-line > span, .progress-line span { transition-duration: 0.01ms; }
 }
